@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rad-hoc (0.0.0)
+    rad-hoc (0.0.1)
       activerecord
       activesupport
       arel
