@@ -9,16 +9,16 @@ class RadHoc
 
   def run_raw
     q = table
-    q, fields = prepare_fields(q)
+    q, fields = prepare_fields(q, [])
     q = q.project(fields.map {|field| field[:column]})
     ActiveRecord::Base.connection.execute(q.to_sql)
   end
 
   def run
-    q = table
-    q, fields = prepare_fields(q)
-    q = q.project(fields.map {|field| field[:column]})
-    results = ActiveRecord::Base.connection.exec_query(q.to_sql)
+    filtered, joined = prepare_filters(table, [])
+    fielded, fields = prepare_fields(filtered, joined)
+    selected = fielded.project(fields.map {|field| field[:column]})
+    results = ActiveRecord::Base.connection.exec_query(selected.to_sql)
 
     {data: label_rows(results, fields),
      labels: generate_labels(fields)
@@ -26,8 +26,9 @@ class RadHoc
   end
 
   private
-  def prepare_fields(q)
-    @query_spec['fields'].reduce([q, [], []]) do |acc, (key,options)|
+  def prepare_fields(q, joined)
+    fields = @query_spec['fields'] || {'id' => nil}
+    fields.reduce([q, [], []]) do |acc, (key,options)|
       q, fields, joined = *acc # Deconstruct accumulator
       field, associations = from_key(key)
 
@@ -38,6 +39,26 @@ class RadHoc
       field = {column: current_table[field], key: key, label: label}
       [q, fields.append(field), joined]
     end
+  end
+
+  def prepare_filters(q, joined)
+    filters = @query_spec['filter'] || []
+    filters.reduce([q, joined]) do |acc, filter|
+      q, joined = *acc # Deconstruct accumulator
+      field, associations = from_key(filter.keys.first)
+
+      q, current_table, joined = joins(q, associations, joined)
+
+      filtered_q = filter.values.first.reduce(q) do |acc,(type, value)|
+        q.where(generate_filter(current_table, field, type, value))
+      end
+      [filtered_q, joined]
+    end
+  end
+
+  def generate_filter(table, col, type, value)
+    filters = {"exactly" => :eq}
+    table[col].send(filters[type], value)
   end
 
   # Joins the tables we need to be able to access the field we want

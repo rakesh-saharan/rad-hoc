@@ -97,5 +97,28 @@ RSpec.describe RadHoc, "#run" do
 
       expect(labels['title']).to eq 'Name'
     end
+
+    context "filtering" do
+      it "can filter exact matches" do
+        title = "My great album!"
+
+        create(:track)
+        create(:track, title: title)
+
+        results = from_literal(
+          <<-EOF
+          table: tracks
+          fields:
+            title:
+          filter:
+            - title:
+                exactly: "#{title}"
+          EOF
+        ).run[:data]
+
+        expect(results.length).to eq 1
+        expect(results.first['title']).to eq title
+      end
+    end
   end
 end
