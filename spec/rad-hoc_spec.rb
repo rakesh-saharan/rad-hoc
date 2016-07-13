@@ -68,5 +68,34 @@ RSpec.describe RadHoc, "#run" do
       expect(result['album.title']).to eq track.album.title
       expect(result['album.performer.title']).to eq track.album.performer.title
     end
+
+    it "can label fields automatically" do
+      track = create(:track)
+
+      labels = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          title:
+        EOF
+      ).run[:labels]
+
+      expect(labels['title']).to eq 'Title'
+    end
+
+    it "can label fields that are manually provided" do
+      track = create(:track)
+
+      labels = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          title:
+            label: "Name"
+        EOF
+      ).run[:labels]
+
+      expect(labels['title']).to eq 'Name'
+    end
   end
 end
