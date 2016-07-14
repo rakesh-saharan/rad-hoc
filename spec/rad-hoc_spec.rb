@@ -103,21 +103,21 @@ RSpec.describe RadHoc, "#run" do
         title = "My great album!"
 
         create(:track)
-        create(:track, title: title)
+        create(:track, album: create(:album, title: title))
 
         results = from_literal(
           <<-EOF
           table: tracks
           fields:
-            title:
+            album.title:
           filter:
-            - title:
+            - album.title:
                 exactly: "#{title}"
           EOF
         ).run[:data]
 
         expect(results.length).to eq 1
-        expect(results.first['title']).to eq title
+        expect(results.first['album.title']).to eq title
       end
     end
   end

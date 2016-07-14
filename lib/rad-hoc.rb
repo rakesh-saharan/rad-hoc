@@ -8,98 +8,109 @@ class RadHoc
   end
 
   def run_raw
-    q = table
-    q, fields = prepare_fields(q, [])
-    q = q.project(fields.map {|field| field[:column]})
-    ActiveRecord::Base.connection.execute(q.to_sql)
+    ActiveRecord::Base.connection.execute(constructed_query.to_sql)
   end
 
   def run
-    filtered, joined = prepare_filters(table, [])
-    fielded, fields = prepare_fields(filtered, joined)
-    selected = fielded.project(fields.map {|field| field[:column]})
-    results = ActiveRecord::Base.connection.exec_query(selected.to_sql)
+    results = ActiveRecord::Base.connection.exec_query(constructed_query.to_sql)
 
-    {data: label_rows(results, fields),
-     labels: generate_labels(fields)
+    {data: label_rows(results),
+     labels: labels
     }
   end
 
   private
-  def prepare_fields(q, joined)
-    fields = @query_spec['fields'] || {'id' => nil}
-    fields.reduce([q, [], []]) do |acc, (key,options)|
-      q, fields, joined = *acc # Deconstruct accumulator
-      field, associations = from_key(key)
-
-      q, current_table, joined = joins(q, associations, joined)
-
-      label = options && options['label'] || key.titleize
-
-      field = {column: current_table[field], key: key, label: label}
-      [q, fields.append(field), joined]
-    end
+  def constructed_query
+    project(prepare_filters(joins(table)))
   end
 
-  def prepare_filters(q, joined)
-    filters = @query_spec['filter'] || []
-    filters.reduce([q, joined]) do |acc, filter|
-      q, joined = *acc # Deconstruct accumulator
-      field, associations = from_key(filter.keys.first)
+  def project(query)
+    cols = fields.keys.map &method(:key_to_col)
+    query.project(cols)
+  end
 
-      q, current_table, joined = joins(q, associations, joined)
+  def prepare_filters(query)
+    filters.reduce(query) do |q, filter|
+      col = key_to_col(filter.keys.first)
 
-      filtered_q = filter.values.first.reduce(q) do |acc,(type, value)|
-        q.where(generate_filter(current_table, field, type, value))
+      filter.values.first.reduce(q) do |q,(type, value)|
+        q.where(generate_filter(col, type, value))
       end
-      [filtered_q, joined]
     end
   end
 
-  def generate_filter(table, col, type, value)
+  def generate_filter(col, type, value)
     filters = {"exactly" => :eq}
-    table[col].send(filters[type], value)
+    col.send(filters[type], value)
   end
 
-  # Joins the tables we need to be able to access the field we want
-  def joins(q, associations, joined)
-    associations.reduce([q, table, joined]) do |acc,assoc|
-      q, current_table, joined = *acc # Deconstruct accumulator
+  def joins(query)
+    keys = fields.keys + filters.map { |f| f.keys.first }
+    associations = keys.map { |key| init(split_key(key)).unshift(table.name) }
+    joins = associations.map(&method(:group2)).flatten(1).uniq
+    joins.reduce(query) do |q, join|
+      base_name, join_name = *join
 
-      join_table = Arel::Table.new(assoc.pluralize)
-      joined_elem = [current_table, join_table].map &:name
-      if !joined.include?(joined_elem) # Make sure that we haven't already joined this one
-        [q.join(join_table).on(current_table[assoc.foreign_key].eq(join_table[:id])),
-         join_table,
-         joined << joined_elem
-        ]
-      else
-        [q, join_table, joined]
-      end
+      base_table = Arel::Table.new(base_name.pluralize)
+      join_table = Arel::Table.new(join_name.pluralize)
+
+      q.join(join_table).on(base_table[join_name.foreign_key].eq(join_table[:id]))
     end
+  end
+
+  # [1,2,3,4] -> [[1,2], [2,3], [3,4]]
+  def group2(a)
+    a.take(a.size - 1).zip(a.drop(1))
   end
 
   # From a table_1.table_2.column style key to [column, [table_1, table_2]]
   def from_key(key)
     s = key.split('.')
-    [s.last, s[0..-2]]
+    [s.last, init(s)]
+  end
+
+  def init(a)
+    a[0..-2]
+  end
+
+  def split_key(key)
+    key.split('.')
+  end
+
+  def key_to_col(key)
+    col, associations = from_key(key)
+    if associations.empty?
+      table[col]
+    else
+      Arel::Table.new(associations.last.pluralize)[col]
+    end
   end
 
   # Associate column names with data
-  def label_rows(results, fields)
-    keys = fields.map {|field| field[:key]}
+  def label_rows(results)
+    keys = fields.keys
     results.rows.map do |row|
       keys.zip(row).to_h
     end
   end
 
-  def generate_labels(fields)
-    fields.reduce({}) do |acc,field|
-      acc.merge(field[:key] => field[:label])
+  def labels
+    fields.reduce({}) do |acc, (key, options)|
+      label = options && options['label'] || split_key(key).last.titleize
+      acc.merge(key => label)
     end
   end
 
+  # Easy access to yaml nodes
   def table
     @table ||= Arel::Table.new(@query_spec['table'])
+  end
+
+  def fields
+    @fields ||= @query_spec['fields'] || {'id' => nil}
+  end
+
+  def filters
+    @filters ||= @query_spec['filter'] || []
   end
 end
