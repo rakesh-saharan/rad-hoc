@@ -26,7 +26,7 @@ To run the query, use the `#run` method:
 results = processor.run
 ```
 This returns a hash:
-- `results[:data]`: an Array of Hashes () with the selected values indexed by field key 
+- `results[:data]`: an Array of Hashes with the selected values indexed by field key 
   - `[{"name" => "Some Company"}]` if there was one company with the name "Some Company" in the DB
 - `results[:labels]`: a labels Hash () for the field keys
   - `{'name' => 'Name'}` in this case
