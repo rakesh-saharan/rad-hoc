@@ -41,7 +41,7 @@ class RadHoc
 
   def generate_filter(col, type, value)
     filters = {"exactly" => :eq}
-    col.send(filters[type], value)
+    col.send(filters[type], Arel::Nodes::Quoted.new(value))
   end
 
   def joins(query)
