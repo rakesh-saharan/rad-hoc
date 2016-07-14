@@ -119,6 +119,27 @@ RSpec.describe RadHoc, "#run" do
         expect(results.length).to eq 1
         expect(results.first['album.title']).to eq title
       end
+
+      it "can filter numbers" do
+        track_number = 3
+
+        create(:track)
+        create(:track, track_number: track_number)
+
+        results = from_literal(
+          <<-EOF
+          table: tracks
+          fields:
+            track_number:
+          filter:
+            - track_number:
+                exactly: #{track_number}
+          EOF
+        ).run[:data]
+
+        expect(results.length).to eq 1
+        expect(results.first['track_number']).to eq track_number
+      end
     end
   end
 end
