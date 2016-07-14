@@ -3,6 +3,11 @@ require 'arel'
 require 'active_support/core_ext/string/inflections'
 
 class RadHoc
+  FILTER_OPERATORS = {"exactly" => :eq,
+                      "less_than" => :lt,
+                      "greater_than" => :gt
+  }
+
   def initialize(spec_yaml)
     @query_spec = YAML.load(spec_yaml)
   end
@@ -17,6 +22,34 @@ class RadHoc
     {data: label_rows(results),
      labels: labels
     }
+  end
+
+  def add_filter(key, type, value)
+    match = filters.select { |col, _| col == key }.first
+    if !match
+      match = {key => {}}
+      filters << match
+    end
+    match[key][type] = value
+    self
+  end
+
+  def validate
+    validations = [
+      # Presence validations
+      validation(:contains_table, "table must be defined", !@query_spec['table'].nil?),
+      # Type validations
+      validation(:fields_is_hash, "fields must be a map", fields.class == Hash)
+    ]
+
+    validations.reduce({valid: true, errors: []}) do |acc, validation|
+      if validation[:valid]
+        acc
+      else
+        error = {name: validation[:name], message: validation[:message]}
+        {valid: false, errors: acc[:errors].push(error)}
+      end
+    end
   end
 
   private
@@ -40,8 +73,7 @@ class RadHoc
   end
 
   def generate_filter(col, type, value)
-    filters = {"exactly" => :eq}
-    col.send(filters[type], Arel::Nodes::Quoted.new(value))
+    col.send(FILTER_OPERATORS[type], Arel::Nodes::Quoted.new(value))
   end
 
   def joins(query)
@@ -84,6 +116,11 @@ class RadHoc
     else
       Arel::Table.new(associations.last.pluralize)[col]
     end
+  end
+
+  # Validation helper functions
+  def validation(name, message, value)
+    {name: name, message: message, valid: value}
   end
 
   # Associate column names with data

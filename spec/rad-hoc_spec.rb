@@ -4,7 +4,7 @@ RSpec.describe RadHoc, "#run" do
   context "raw queries" do
     it "can do a simple select query" do
       track = create(:track)
-      result = from_literal(
+      processor = from_literal(
         <<-EOF
         table: tracks
         fields:
@@ -13,7 +13,11 @@ RSpec.describe RadHoc, "#run" do
           id:
           album_id:
         EOF
-      ).run_raw
+      )
+      validation = processor.validate
+      expect(validation[:valid]).to be true
+
+      result = processor.run_raw
       expect(result.length).to eq 1
 
       result_track = result.first
@@ -140,6 +144,67 @@ RSpec.describe RadHoc, "#run" do
         expect(results.length).to eq 1
         expect(results.first['track_number']).to eq track_number
       end
+    end
+  end
+
+  context "editing after initializing" do
+    it "can add filters after initialization" do
+      track = create(:track)
+
+      results = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          track_number:
+        EOF
+      ).add_filter('track_number', 'exactly', track.track_number - 1).run[:data]
+
+      expect(results).to be_empty
+    end
+
+    it "can add filters on fields that are already filtered" do
+      create(:track, track_number: 3)
+      create(:track, track_number: 5)
+      create(:track, track_number: 10)
+
+      results = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          track_number:
+        filter:
+          - track_number:
+              less_than: 8
+        EOF
+      ).add_filter('track_number', 'greater_than', 3).run[:data]
+
+      expect(results.length).to eq 1
+    end
+  end
+
+  context "validations" do
+    it "validates that we've provided a table" do
+      validation = from_literal(
+        <<-EOF
+        fields:
+          title:
+        EOF
+      ).validate
+
+      expect(validation[:errors].first[:name]).to eq :contains_table
+    end
+
+    it "validates that fields are of the correct data type" do
+      validation = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          title
+          track_number
+        EOF
+      ).validate
+
+      expect(validation[:valid]).to be false
     end
   end
 end

@@ -15,11 +15,11 @@ processor = RadHoc.new(
 )
 ```
 
-Use `#validate` to check whether the specification is valid (not yet implemented):
+Use `#validate` to check whether the specification is valid (not yet fully implemented):
 ```ruby
 valid = processor.validate
 ```
-If the spec is valid, `#validate` will return `{valid: true}`. Otherwise, it will return `{valid: false, errors: []}` where the errors Array contains information about why the spec is invalid.
+If the spec is valid, `#validate` will return `{valid: true, errors: []}`. Otherwise, it will return `{valid: false, errors: [...]}` where the errors Array contains information about why the spec is invalid.
 
 To run the query, use the `#run` method:
 ```ruby
@@ -28,10 +28,22 @@ results = processor.run
 This returns a hash:
 - `results[:data]`: an Array of Hashes with the selected values indexed by field key 
   - `[{"name" => "Some Company"}]` if there was one company with the name "Some Company" in the DB
-- `results[:labels]`: a labels Hash () for the field keys
+- `results[:labels]`: a labels Hash for the field keys
   - `{'name' => 'Name'}` in this case
 
 It will error if the specification is not valid, so check with `#validate` before using `#run` (once it's implemented).
+
+## Modification Methods
+Sometimes you just want to make a few changes to the query before running it. These methods provide a way to do that. All of these methods return `self`.
+
+### `#add_filter`
+| Argument  | Type   | Description                                  |
+| --------- | ------ | -------------------------------------------  |
+| key       | String | 'company.owner.name' style column specifier  |
+| operation | String | comparison operator (same as YAML operators) |
+| value     | Any    | value to compare against                     |
+
+Adds a new filter to the query
 
 ## Example Query Specification
 ```yaml
