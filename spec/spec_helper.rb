@@ -1,3 +1,6 @@
+require 'simplecov'
+SimpleCov.start
+
 require 'pry'
 require 'rad-hoc'
 require 'support/factory_girl'
