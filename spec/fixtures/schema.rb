@@ -2,6 +2,7 @@ ActiveRecord::Schema.define do
   create_table :albums do |table|
     table.column :title, :string
     table.column :performer_id, :integer
+    table.column :released_on, :date
   end
 
   create_table :tracks do |table|

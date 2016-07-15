@@ -1,6 +1,7 @@
 FactoryGirl.define do
   factory :album do
     title "Some Album"
+    released_on Date.today
     performer
   end
 

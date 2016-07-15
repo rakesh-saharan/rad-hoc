@@ -20,7 +20,7 @@ class RadHoc
     query = construct_query(relation)
     results = ActiveRecord::Base.connection.exec_query(query.to_sql)
 
-    {data: label_rows(results),
+    {data: label_rows(cast_values(results)),
      labels: labels
     }
   end
@@ -125,10 +125,22 @@ class RadHoc
   end
 
   # Associate column names with data
-  def label_rows(results)
+  def label_rows(rows)
     keys = fields.keys
-    results.rows.map do |row|
+    rows.map do |row|
       keys.zip(row).to_h
+    end
+  end
+
+  def cast_values(results)
+    casters = fields.keys.map do |key|
+      field, associations = from_key(key)
+      associations.unshift(table.name).last.classify.constantize.type_for_attribute(field)
+    end
+    results.rows.map do |row|
+      casters.zip(row).map { |(caster, value)|
+        caster.cast(value)
+      }
     end
   end
 

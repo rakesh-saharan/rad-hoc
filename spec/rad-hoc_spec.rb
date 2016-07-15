@@ -102,6 +102,22 @@ RSpec.describe RadHoc, "#run" do
       expect(labels['title']).to eq 'Name'
     end
 
+    context "type casting" do
+      it "can cast dates" do
+        create(:album)
+
+        result = from_literal(
+          <<-EOF
+          table: albums
+          fields:
+            released_on:
+          EOF
+        ).run[:data].first
+
+        expect(result['released_on'].class).to be(Date)
+      end
+    end
+
     context "filtering" do
       it "can filter exact matches" do
         title = "My great album!"
