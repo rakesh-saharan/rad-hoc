@@ -18,7 +18,6 @@ class RadHoc
 
   def run(relation = default_relation)
     query = construct_query(relation)
-    binding.pry
     results = ActiveRecord::Base.connection.exec_query(query.to_sql)
 
     {data: label_rows(results),
