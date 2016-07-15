@@ -25,6 +25,11 @@ class RadHoc
     }
   end
 
+  # Does no data extraction
+  def run_as_activerecord(relation)
+    {data: construct_query(relation), lables: labels}
+  end
+
   def add_filter(key, type, value)
     match = filters.select { |col, _| col == key }.first
     if !match
