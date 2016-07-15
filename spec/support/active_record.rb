@@ -1,15 +1,29 @@
 require 'active_record'
 require 'active_support'
-require 'sqlite3'
 
 # File created with help from http://www.iain.nl/testing-activerecord-in-isolation
 
 #ActiveRecord::Base.logger = Logger.new(STDERR)
+=begin
+def setup_postgres
+  config = {
+    database: 'rad-hoc_test',
+    adapter: 'postgresql'
+  }
+  ActiveRecord::Base.establish_connection config.merge(database: nil)
+  ActiveRecord::Base.connection.drop_database config[:database]
+  ActiveRecord::Base.connection.create_database config[:database], {charset: 'utf8'}
+  ActiveRecord::Base.establish_connection config
+end
+=end
 
-ActiveRecord::Base.establish_connection(
+def setup_sqlite3
+  ActiveRecord::Base.establish_connection(
     adapter: 'sqlite3',
     database: ':memory:'
-)
+  )
+end
+setup_sqlite3
 
 RSpec.configure do |config|
   config.around do |example|

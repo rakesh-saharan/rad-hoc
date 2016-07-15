@@ -150,7 +150,7 @@ class RadHoc
     end
     results.rows.map do |row|
       casters.zip(row).map { |(caster, value)|
-        caster.cast(value)
+        caster.type_cast_from_database(value)
       }
     end
   end
