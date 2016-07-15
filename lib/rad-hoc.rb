@@ -13,11 +13,13 @@ class RadHoc
   end
 
   def run_raw
-    ActiveRecord::Base.connection.execute(constructed_query.to_sql)
+    ActiveRecord::Base.connection.execute(construct_query(default_relation).to_sql)
   end
 
-  def run
-    results = ActiveRecord::Base.connection.exec_query(constructed_query.to_sql)
+  def run(relation = default_relation)
+    query = construct_query(relation)
+    binding.pry
+    results = ActiveRecord::Base.connection.exec_query(query.to_sql)
 
     {data: label_rows(results),
      labels: labels
@@ -53,13 +55,13 @@ class RadHoc
   end
 
   private
-  def constructed_query
-    project(prepare_filters(joins(table)))
+  def construct_query(from)
+    project(prepare_filters(joins(from)))
   end
 
   def project(query)
     cols = fields.keys.map &method(:key_to_col)
-    query.project(cols)
+    query.select(cols)
   end
 
   def prepare_filters(query)
@@ -86,7 +88,7 @@ class RadHoc
       base_table = Arel::Table.new(base_name.pluralize)
       join_table = Arel::Table.new(join_name.pluralize)
 
-      q.join(join_table).on(base_table[join_name.foreign_key].eq(join_table[:id]))
+      q.joins(Arel::Nodes::InnerJoin.new(join_table, Arel::Nodes::On.new(base_table[join_name.foreign_key].eq(join_table[:id]))))
     end
   end
 
@@ -149,5 +151,9 @@ class RadHoc
 
   def filters
     @filters ||= @query_spec['filter'] || []
+  end
+
+  def default_relation
+    table.name.classify.constantize
   end
 end

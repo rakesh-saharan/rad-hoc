@@ -207,4 +207,23 @@ RSpec.describe RadHoc, "#run" do
       expect(validation[:valid]).to be false
     end
   end
+
+  context "partial" do
+    it "supports using existing wheres" do
+      track_number = 3
+      create(:track, track_number: 5)
+      create(:track, track_number: track_number)
+
+      q = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          track_number:
+        EOF
+      )
+
+      results = q.run(Track.where(track_number: track_number))[:data]
+      expect(results.length).to eq 1
+    end
+  end
 end

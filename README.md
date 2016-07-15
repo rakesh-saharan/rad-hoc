@@ -31,7 +31,7 @@ This returns a hash:
 - `results[:labels]`: a labels Hash for the field keys
   - `{'name' => 'Name'}` in this case
 
-It will error if the specification is not valid, so check with `#validate` before using `#run` (once it's implemented).
+You can pass in an ActiveRecord relation if you want to do some filtering before running the query. It will error if the specification is not valid, so check with `#validate` before using `#run` (once it's implemented).
 
 ## Modification Methods
 Sometimes you just want to make a few changes to the query before running it. These methods provide a way to do that. All of these methods return `self`.
