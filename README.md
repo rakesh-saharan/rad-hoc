@@ -45,6 +45,8 @@ Sometimes you just want to make a few changes to the query before running it. Th
 
 Adds a new filter to the query
 
+Example: `processor.add_filter("name", "exactly", "Some Company")`
+
 ## Example Query Specification
 ```yaml
 table: tasks
