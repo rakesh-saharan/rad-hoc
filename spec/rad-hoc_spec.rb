@@ -161,6 +161,20 @@ RSpec.describe RadHoc, "#run" do
         expect(results.first['track_number']).to eq track_number
       end
     end
+
+    it "properly handles associations when we don't follow naming conventions" do
+      album = create(:album)
+
+      results = from_literal(
+        <<-EOF
+        table: albums
+        fields:
+          owner.name:
+        EOF
+      ).run[:data].first
+
+      expect(results['owner.name']).to eq album.owner.name
+    end
   end
 
   context "editing after initializing" do

@@ -25,6 +25,7 @@ load 'spec/fixtures/schema.rb'
 class Album < ActiveRecord::Base
   has_many :tracks
   belongs_to :performer
+  belongs_to :owner, class_name: "Record"
 end
 
 class Track < ActiveRecord::Base
@@ -33,5 +34,9 @@ class Track < ActiveRecord::Base
 end
 
 class Performer < ActiveRecord::Base
+  has_many :albums
+end
+
+class Record < ActiveRecord::Base
   has_many :albums
 end

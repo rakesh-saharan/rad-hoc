@@ -79,16 +79,22 @@ class RadHoc
 
   def joins(query)
     keys = fields.keys + filters.map { |f| f.keys.first }
-    associations = keys.map { |key| init(split_key(key)).unshift(table.name) }
-    joins = associations.map(&method(:group2)).flatten(1).uniq
-    joins.reduce(query) do |q, join|
-      base_name, join_name = *join
-
-      base_table = Arel::Table.new(base_name.pluralize)
-      join_table = Arel::Table.new(join_name.pluralize)
-
-      q.joins(Arel::Nodes::InnerJoin.new(join_table, Arel::Nodes::On.new(base_table[join_name.foreign_key].eq(join_table[:id]))))
+    association_chains = keys.map { |key| init(split_key(key)) }
+    joins_hashes = association_chains.map do |association_chain|
+      association_chain.reverse.reduce({}) do |join_hash, association_name|
+        {association_name => join_hash}
+      end
     end
+    query.joins(joins_hashes)
+  end
+
+  def reflections(association_chain)
+    _, reflections = association_chain.reduce([default_relation, []]) do |acc, association_name|
+      klass, reflections = *acc
+      reflection = klass.reflect_on_association(association_name)
+      [reflection.klass, reflections.push(reflection)]
+    end
+    reflections.uniq
   end
 
   # [1,2,3,4] -> [[1,2], [2,3], [3,4]]
@@ -115,7 +121,8 @@ class RadHoc
     if associations.empty?
       table[col]
     else
-      Arel::Table.new(associations.last.pluralize)[col]
+      # Use arel_attribute in rails 5
+      reflections(associations).last.klass.arel_table[col]
     end
   end
 
@@ -135,7 +142,11 @@ class RadHoc
   def cast_values(results)
     casters = fields.keys.map do |key|
       field, associations = from_key(key)
-      associations.unshift(table.name).last.classify.constantize.type_for_attribute(field)
+      if associations.empty?
+        default_relation.type_for_attribute(field)
+      else
+        reflections(associations).last.klass.type_for_attribute(field)
+      end
     end
     results.rows.map do |row|
       casters.zip(row).map { |(caster, value)|
