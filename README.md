@@ -59,24 +59,24 @@ sort:
   - edited_at: asc
   - description: desc
 filter:
-  - assigned_to_member.name:
-      contains: " "
-      not:
-        starts_with: "Gary"
-        ends_with: "Foster"
-  - charges.hours:
-      greater_than: 1
-      less_than: 8
-  - charges.actual_start_date:
-      greater_than: 2016-05-01
-  - charges.actual_end_date:
-      on: 2016-05-02 # Matches date and datetimes on specified day
-      greater_than_or_equal_to: 2016-05-02 12:00:00 -5
-      less_than_or_equal_to: 2016-05-03 23:59:59 -5
-  - task_status:
-    any: # Translates to SQL IN
-      - "Completed"
-      - "Discarded"
+  assigned_to_member.name:
+    contains: " "
+    not:
+      starts_with: "Gary"
+      ends_with: "Foster"
+  charges.hours:
+    greater_than: 1
+    less_than: 8
+  charges.actual_start_date:
+    greater_than: 2016-05-01
+  charges.actual_end_date:
+    on: 2016-05-02 # Matches date and datetimes on specified day
+    greater_than_or_equal_to: 2016-05-02 12:00:00 -5
+    less_than_or_equal_to: 2016-05-03 23:59:59 -5
+  task_status:
+  any: # Translates to SQL IN
+    - "Completed"
+    - "Discarded"
 # Missing grouping capabilities
 aggregate:
   charges.hours:

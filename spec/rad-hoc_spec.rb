@@ -131,8 +131,8 @@ RSpec.describe RadHoc, "#run" do
           fields:
             album.title:
           filter:
-            - album.title:
-                exactly: "#{title}"
+            album.title:
+              exactly: "#{title}"
           EOF
         ).run[:data]
 
@@ -152,8 +152,8 @@ RSpec.describe RadHoc, "#run" do
           fields:
             track_number:
           filter:
-            - track_number:
-                exactly: #{track_number}
+            track_number:
+              exactly: #{track_number}
           EOF
         ).run[:data]
 
@@ -263,8 +263,8 @@ RSpec.describe RadHoc, "#run" do
         fields:
           track_number:
         filter:
-          - track_number:
-              less_than: 8
+          track_number:
+            less_than: 8
         EOF
       ).add_filter('track_number', 'greater_than', 3).run[:data]
 

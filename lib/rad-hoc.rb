@@ -31,12 +31,12 @@ class RadHoc
   end
 
   def add_filter(key, type, value)
-    match = filters.select { |col, _| col == key }.first
-    if !match
-      match = {key => {}}
-      filters << match
+    constraints = filters[key]
+    if !constraints
+      constraints = {}
+      @filters[key] = constraints
     end
-    match[key][type] = value
+    constraints[type] = value
     self
   end
 
@@ -45,7 +45,8 @@ class RadHoc
       # Presence validations
       validation(:contains_table, "table must be defined", !@query_spec['table'].nil?),
       # Type validations
-      validation(:fields_is_hash, "fields must be a map", fields.class == Hash)
+      validation(:fields_is_hash, "fields must be a map", fields.class == Hash),
+      validation(:filters_is_hash, "filters must be a map", filters.class == Hash)
     ]
 
     validations.reduce({valid: true, errors: []}) do |acc, validation|
@@ -69,10 +70,10 @@ class RadHoc
   end
 
   def prepare_filters(query)
-    filters.reduce(query) do |q, filter|
-      col = key_to_col(filter.keys.first)
+    filters.reduce(query) do |q, (key, constraints)|
+      col = key_to_col(key)
 
-      filter.values.first.reduce(q) do |q,(type, value)|
+      constraints.reduce(q) do |q,(type, value)|
         q.where(generate_filter(col, type, value))
       end
     end
@@ -93,7 +94,7 @@ class RadHoc
   end
 
   def joins(query)
-    keys = fields.keys + filters.map { |f| f.keys.first } + sorts.map { |f| f.keys.first }
+    keys = fields.keys + filters.keys + sorts.map { |f| f.keys.first }
     association_chains = keys.map { |key| init(split_key(key)) }
     joins_hashes = association_chains.map do |association_chain|
       association_chain.reverse.reduce({}) do |join_hash, association_name|
@@ -110,11 +111,6 @@ class RadHoc
       [reflection.klass, reflections.push(reflection)]
     end
     reflections.uniq
-  end
-
-  # [1,2,3,4] -> [[1,2], [2,3], [3,4]]
-  def group2(a)
-    a.take(a.size - 1).zip(a.drop(1))
   end
 
   # From a table_1.table_2.column style key to [column, [table_1, table_2]]
@@ -187,7 +183,7 @@ class RadHoc
   end
 
   def filters
-    @filters ||= @query_spec['filter'] || []
+    @filters ||= @query_spec['filter'] || {}
   end
 
   def sorts
