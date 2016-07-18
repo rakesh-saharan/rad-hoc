@@ -40,11 +40,19 @@ class Album < ActiveRecord::Base
   has_many :tracks
   belongs_to :performer
   belongs_to :owner, class_name: "Record"
+
+  scope :published, -> { where(published: true) }
+
+  def self.is_published(b)
+    where(published: b)
+  end
 end
 
 class Track < ActiveRecord::Base
   belongs_to :album
   has_one :performer, through: :album
+
+  scope :best_title, -> { where(title: "Best Title") }
 end
 
 class Performer < ActiveRecord::Base

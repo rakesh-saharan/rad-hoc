@@ -316,4 +316,50 @@ RSpec.describe RadHoc, "#run" do
       expect(results.length).to eq 1
     end
   end
+
+  context "with scopes" do
+    it "supports providing scopes" do
+      create(:track)
+      target = create(:track, title: 'Best Title')
+
+      literal =
+        <<-EOF
+        table: tracks
+        fields:
+          id:
+        EOF
+      results = RadHoc.new(literal, scopes = [best_title: []]).run[:data]
+      expect(results.length).to eq 1
+      expect(results.first['id']).to eq target.id
+    end
+
+    it "supports providing scopes on an association" do
+      create(:track)
+      create(:track, album: create(:album, published: false))
+
+      literal =
+        <<-EOF
+        table: tracks
+        fields:
+          album.published:
+        EOF
+      results = RadHoc.new(literal, scopes = [published: []]).run[:data]
+      expect(results.length).to eq 1
+    end
+
+    it "supports providing scopes with an argument" do
+      create(:track, album: create(:album, published: false))
+      create(:track)
+
+      literal =
+        <<-EOF
+        table: tracks
+        fields:
+          album.published:
+        EOF
+      scope = {is_published: [false]}
+      results = RadHoc.new(literal, scopes = [scope]).run[:data]
+      expect(results.length).to eq 1
+    end
+  end
 end

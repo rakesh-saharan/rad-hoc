@@ -4,6 +4,7 @@ ActiveRecord::Schema.define do
     table.column :performer_id, :integer
     table.column :owner_id, :integer
     table.column :released_on, :date
+    table.column :published, :boolean
   end
 
   create_table :tracks do |table|

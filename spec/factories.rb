@@ -1,6 +1,7 @@
 FactoryGirl.define do
   factory :album do
     title "Some Album"
+    published true
     released_on Date.today
     performer
     association :owner, factory: :record

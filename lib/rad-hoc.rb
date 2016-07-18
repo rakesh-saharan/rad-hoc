@@ -8,8 +8,9 @@ class RadHoc
                       "greater_than" => :gt
   }
 
-  def initialize(spec_yaml)
+  def initialize(spec_yaml, scopes = [])
     @query_spec = YAML.load(spec_yaml)
+    @scopes = scopes
   end
 
   def run_raw
@@ -61,7 +62,19 @@ class RadHoc
 
   private
   def construct_query(from)
-    project(prepare_sorts(prepare_filters(joins(from))))
+    project(prepare_sorts(prepare_filters(joins(apply_scopes(from)))))
+  end
+
+  def apply_scopes(query)
+    @scopes.reduce(query) do |q, scope|
+      scope.reduce(q) do |q, (scope_name, args)|
+        if q.respond_to? scope_name
+          q.send(scope_name, *args)
+        else
+          q
+        end
+      end
+    end
   end
 
   def project(query)
@@ -101,7 +114,13 @@ class RadHoc
         {association_name => join_hash}
       end
     end
-    query.joins(joins_hashes)
+    joined_query = query.joins(joins_hashes)
+
+    # Apply scopes for all joined tables
+    models = association_chains.map(&method(:reflections)).flatten(1).uniq.map(&:klass)
+    models.reduce(joined_query) do |q, model|
+      q.merge(apply_scopes(model).all)
+    end
   end
 
   def reflections(association_chain)
@@ -110,7 +129,7 @@ class RadHoc
       reflection = klass.reflect_on_association(association_name)
       [reflection.klass, reflections.push(reflection)]
     end
-    reflections.uniq
+    reflections
   end
 
   # From a table_1.table_2.column style key to [column, [table_1, table_2]]
