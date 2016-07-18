@@ -60,7 +60,7 @@ class RadHoc
 
   private
   def construct_query(from)
-    project(prepare_filters(joins(from)))
+    project(prepare_sorts(prepare_filters(joins(from))))
   end
 
   def project(query)
@@ -78,12 +78,22 @@ class RadHoc
     end
   end
 
+  def prepare_sorts(query)
+    sorts.reduce(query) do |q, sort|
+      key, sort_type_s = sort.first
+      col = key_to_col(key)
+      sort_type = sort_type_s.to_sym
+
+      q.order(col.send(sort_type))
+    end
+  end
+
   def generate_filter(col, type, value)
     col.send(FILTER_OPERATORS[type], Arel::Nodes::Quoted.new(value))
   end
 
   def joins(query)
-    keys = fields.keys + filters.map { |f| f.keys.first }
+    keys = fields.keys + filters.map { |f| f.keys.first } + sorts.map { |f| f.keys.first }
     association_chains = keys.map { |key| init(split_key(key)) }
     joins_hashes = association_chains.map do |association_chain|
       association_chain.reverse.reduce({}) do |join_hash, association_name|
@@ -178,6 +188,10 @@ class RadHoc
 
   def filters
     @filters ||= @query_spec['filter'] || []
+  end
+
+  def sorts
+    @sorts ||= @query_spec['sort'] || []
   end
 
   def default_relation

@@ -162,6 +162,66 @@ RSpec.describe RadHoc, "#run" do
       end
     end
 
+    context "sorting" do
+      it "can do simple sorts" do
+        create(:track, title: "De Track")
+        create(:track, title: "Albernon")
+
+        results = from_literal(
+          <<-EOF
+          table: tracks
+          fields:
+            title:
+          sort:
+            - title: asc
+          EOF
+        ).run[:data]
+
+        expect(results.first['title']).to be < results[1]['title']
+      end
+
+      it "can do sorts on associations" do
+        t1 = create(:track, album: create(:album, title: "A Low One"))
+        t2 = create(:track, album: create(:album, title: "The High One"))
+
+        results = from_literal(
+          <<-EOF
+          table: tracks
+          fields:
+            id:
+          sort:
+            - album.title: desc
+          EOF
+        ).run[:data]
+
+        expect(results.first['id']).to eq t2.id
+        expect(results[1]['id']).to eq t1.id
+      end
+
+      it "can sort on multiple columns" do
+        a = create(:album)
+        t1 = create(:track, title: "Same", track_number: 4, album: a)
+        t2 = create(:track, title: "Same", track_number: 3, album: a)
+        t3 = create(:track, title: "Different", track_number: 9, album: a)
+
+        results = from_literal(
+          <<-EOF
+          table: tracks
+          fields:
+            id:
+          sort:
+            - title: asc
+            - track_number: asc
+          EOF
+        ).run[:data]
+
+        r1, r2, r3 = results
+        expect(r1['id']).to eq t3.id
+        expect(r2['id']).to eq t2.id
+        expect(r3['id']).to eq t1.id
+      end
+    end
+
     it "properly handles associations when we don't follow naming conventions" do
       album = create(:album)
 
