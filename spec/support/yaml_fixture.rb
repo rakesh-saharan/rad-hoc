@@ -1,14 +1,12 @@
 require 'spec_helper'
 
 module YAMLFixture
-=begin
-  def from_file(name)
-    RadHoc.new(File.open(File.join(Bundler.root, "spec/fixtures/yaml/#{name}.yaml")))
+  def from_yaml(name)
+    RadHoc::Processor.new(File.open(File.join(Bundler.root, "spec/fixtures/yaml/#{name}")))
   end
-=end
 
   def from_literal(literal)
-    RadHoc.new(literal)
+    RadHoc::Processor.new(literal)
   end
 end
 

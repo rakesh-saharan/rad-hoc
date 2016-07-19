@@ -1,0 +1,6 @@
+table: tracks
+fields:
+  title:
+  track_number:
+  id:
+  album_id:
