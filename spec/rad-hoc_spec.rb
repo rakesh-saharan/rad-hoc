@@ -298,25 +298,6 @@ RSpec.describe RadHoc, "#run" do
     end
   end
 
-  context "partial" do
-    it "supports using existing wheres" do
-      track_number = 3
-      create(:track, track_number: 5)
-      create(:track, track_number: track_number)
-
-      q = from_literal(
-        <<-EOF
-        table: tracks
-        fields:
-          track_number:
-        EOF
-      )
-
-      results = q.run(Track.where(track_number: track_number))[:data]
-      expect(results.length).to eq 1
-    end
-  end
-
   context "with scopes" do
     it "supports providing scopes" do
       create(:track)
@@ -361,5 +342,24 @@ RSpec.describe RadHoc, "#run" do
       results = RadHoc.new(literal, scopes = [scope]).run[:data]
       expect(results.length).to eq 1
     end
+  end
+end
+
+RSpec.describe RadHoc, "#all_models" do
+  it "returns all models used" do
+    models = from_literal(
+      <<-EOF
+      table: tracks
+      fields:
+        id:
+      sort:
+        - album.owner.name: asc
+      filter:
+        album.performer.name:
+          exactly: "Some guy"
+      EOF
+    ).all_models
+
+    expect(models).to include(Track, Album, Record)
   end
 end

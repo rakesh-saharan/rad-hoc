@@ -14,11 +14,11 @@ class RadHoc
   end
 
   def run_raw
-    ActiveRecord::Base.connection.execute(construct_query(default_relation).to_sql)
+    ActiveRecord::Base.connection.execute(construct_query.to_sql)
   end
 
-  def run(relation = default_relation)
-    query = construct_query(relation)
+  def run
+    query = construct_query
     results = ActiveRecord::Base.connection.exec_query(query.to_sql)
 
     {data: label_rows(cast_values(results)),
@@ -27,9 +27,11 @@ class RadHoc
   end
 
   # Does no data extraction
-  def run_as_activerecord(relation)
-    {data: construct_query(relation), lables: labels}
+=begin
+  def run_as_activerecord
+    {data: construct_query, lables: labels}
   end
+=end
 
   def add_filter(key, type, value)
     constraints = filters[key]
@@ -60,9 +62,13 @@ class RadHoc
     end
   end
 
+  def all_models
+    models(all_keys.map(&method(:to_association_chain)))
+  end
+
   private
-  def construct_query(from)
-    project(prepare_sorts(prepare_filters(joins(apply_scopes(from)))))
+  def construct_query
+    project(prepare_sorts(prepare_filters(joins(base_relation))))
   end
 
   def apply_scopes(query)
@@ -92,6 +98,10 @@ class RadHoc
     end
   end
 
+  def generate_filter(col, type, value)
+    col.send(FILTER_OPERATORS[type], Arel::Nodes::Quoted.new(value))
+  end
+
   def prepare_sorts(query)
     sorts.reduce(query) do |q, sort|
       key, sort_type_s = sort.first
@@ -102,13 +112,8 @@ class RadHoc
     end
   end
 
-  def generate_filter(col, type, value)
-    col.send(FILTER_OPERATORS[type], Arel::Nodes::Quoted.new(value))
-  end
-
   def joins(query)
-    keys = fields.keys + filters.keys + sorts.map { |f| f.keys.first }
-    association_chains = keys.map { |key| init(split_key(key)) }
+    association_chains = all_keys.map { |key| to_association_chain(key) }
     joins_hashes = association_chains.map do |association_chain|
       association_chain.reverse.reduce({}) do |join_hash, association_name|
         {association_name => join_hash}
@@ -117,14 +122,17 @@ class RadHoc
     joined_query = query.joins(joins_hashes)
 
     # Apply scopes for all joined tables
-    models = association_chains.map(&method(:reflections)).flatten(1).uniq.map(&:klass)
-    models.reduce(joined_query) do |q, model|
+    models(association_chains).reduce(joined_query) do |q, model|
       q.merge(apply_scopes(model).all)
     end
   end
 
+  def models(association_chains)
+    [base_relation] + association_chains.map(&method(:reflections)).flatten(1).uniq.map(&:klass)
+  end
+
   def reflections(association_chain)
-    _, reflections = association_chain.reduce([default_relation, []]) do |acc, association_name|
+    _, reflections = association_chain.reduce([base_relation, []]) do |acc, association_name|
       klass, reflections = *acc
       reflection = klass.reflect_on_association(association_name)
       [reflection.klass, reflections.push(reflection)]
@@ -156,6 +164,10 @@ class RadHoc
     end
   end
 
+  def to_association_chain(key)
+    init(split_key(key))
+  end
+
   # Validation helper functions
   def validation(name, message, value)
     {name: name, message: message, valid: value}
@@ -173,7 +185,7 @@ class RadHoc
     casters = fields.keys.map do |key|
       field, associations = from_key(key)
       if associations.empty?
-        default_relation.type_for_attribute(field)
+        base_relation.type_for_attribute(field)
       else
         reflections(associations).last.klass.type_for_attribute(field)
       end
@@ -209,7 +221,11 @@ class RadHoc
     @sorts ||= @query_spec['sort'] || []
   end
 
-  def default_relation
+  def all_keys
+    fields.keys + filters.keys + sorts.map { |f| f.keys.first }
+  end
+
+  def base_relation
     table.name.classify.constantize
   end
 end
