@@ -113,7 +113,7 @@ class RadHoc
   end
 
   def joins(query)
-    association_chains = all_keys.map { |key| to_association_chain(key) }
+    association_chains = all_keys.map(&method(:to_association_chain))
     joins_hashes = association_chains.map do |association_chain|
       association_chain.reverse.reduce({}) do |join_hash, association_name|
         {association_name => join_hash}
