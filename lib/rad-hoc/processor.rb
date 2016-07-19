@@ -18,8 +18,7 @@ class RadHoc::Processor
   end
 
   def run
-    query = construct_query
-    results = ActiveRecord::Base.connection.exec_query(query.to_sql)
+    results = ActiveRecord::Base.connection.exec_query(construct_query.to_sql)
 
     {data: label_rows(cast_values(results)),
      labels: labels
