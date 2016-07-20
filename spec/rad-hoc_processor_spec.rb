@@ -7,7 +7,7 @@ describe RadHoc::Processor do
         track = create(:track)
         processor = from_yaml('simple.yaml')
         validation = processor.validate
-        expect(validation[:valid]).to be true
+        expect(validation).to be_empty
 
         result = processor.run_raw
         expect(result.length).to eq 1
@@ -273,7 +273,7 @@ describe RadHoc::Processor do
           EOF
         ).validate
 
-        expect(validation[:errors].first[:name]).to eq :contains_table
+        expect(validation.first[:name]).to eq :contains_table
       end
 
       it "validates that fields are of the correct data type" do
@@ -286,7 +286,7 @@ describe RadHoc::Processor do
           EOF
         ).validate
 
-        expect(validation[:valid]).to be false
+        expect(validation).to_not be_empty
       end
     end
 

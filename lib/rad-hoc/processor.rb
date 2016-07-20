@@ -46,20 +46,17 @@ class RadHoc::Processor
   end
 
   def validate
-    validations = [
+    [
       # Presence validations
       validation(:contains_table, "table must be defined", !table_name.nil?),
       # Type validations
       validation(:fields_is_hash, "fields must be a map", fields.class == Hash),
       validation(:filters_is_hash, "filters must be a map", filters.class == Hash)
-    ]
-
-    validations.reduce({valid: true, errors: []}) do |acc, validation|
+    ].reduce([]) do |acc, validation|
       if validation[:valid]
         acc
       else
-        error = {name: validation[:name], message: validation[:message]}
-        {valid: false, errors: acc[:errors].push(error)}
+        acc.push({name: validation[:name], message: validation[:message]})
       end
     end
   end

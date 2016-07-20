@@ -19,7 +19,7 @@ Use `#validate` to check whether the specification is valid (not yet fully imple
 ```ruby
 valid = processor.validate
 ```
-If the spec is valid, `#validate` will return `{valid: true, errors: []}`. Otherwise, it will return `{valid: false, errors: [...]}` where the errors Array contains information about why the spec is invalid.
+If the spec is valid, `#validate` will return an Array of errors which contains information about why the spec is invalid.
 
 To run the query, use the `#run` method:
 ```ruby
