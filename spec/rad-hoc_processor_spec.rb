@@ -349,6 +349,29 @@ describe RadHoc::Processor do
     end
   end
 
+  describe "#run_as_activerecord" do
+    it "returns a relation and we can iterate through the values" do
+      album = create(:album, title: "Lovely album")
+      track_1 = create(:track, title: "Track 1", album: album)
+      track_2 = create(:track, title: "Track 2", album: album)
+
+      result = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          title:
+          album.title:
+        EOF
+      ).run_as_activerecord
+
+      expect(result[:data].first.class).to eq Track
+      expect(result[:data].map { |row| result[:row_fetcher].call(row) }).to eq [
+        [track_1.title, album.title],
+        [track_2.title, album.title]
+      ]
+    end
+  end
+
   describe "#all_models" do
     it "returns all models used" do
       models = from_literal(

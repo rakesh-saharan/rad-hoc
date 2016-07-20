@@ -25,12 +25,15 @@ class RadHoc::Processor
     }
   end
 
-  # Does no data extraction
-=begin
+  # Does no data extraction but provides row_fetcher to get values
   def run_as_activerecord
-    {data: construct_query, lables: labels}
+    row_fetcher = lambda do |row|
+      fields.keys.map do |key|
+        split_key(key).reduce(row, :send)
+      end
+    end
+    {data: construct_query(includes: true), lables: labels, row_fetcher: row_fetcher}
   end
-=end
 
   def add_filter(key, type, value)
     constraints = filters[key]
@@ -45,7 +48,7 @@ class RadHoc::Processor
   def validate
     validations = [
       # Presence validations
-      validation(:contains_table, "table must be defined", !@query_spec['table'].nil?),
+      validation(:contains_table, "table must be defined", !table_name.nil?),
       # Type validations
       validation(:fields_is_hash, "fields must be a map", fields.class == Hash),
       validation(:filters_is_hash, "filters must be a map", filters.class == Hash)
@@ -70,9 +73,17 @@ class RadHoc::Processor
     all_keys.map(&method(:key_to_col))
   end
 
+  def table_name
+    @query_spec['table']
+  end
+
   private
-  def construct_query
-    project(prepare_sorts(prepare_filters(joins(base_relation))))
+  def construct_query(includes: false)
+    project(
+      prepare_sorts(prepare_filters(
+        joins(base_relation, includes: includes)
+      ))
+    )
   end
 
   def apply_scopes(query)
@@ -116,7 +127,7 @@ class RadHoc::Processor
     end
   end
 
-  def joins(query)
+  def joins(query, includes: false)
     association_chains = all_keys.map(&method(:to_association_chain))
     joins_hashes = association_chains.map do |association_chain|
       association_chain.reverse.reduce({}) do |join_hash, association_name|
@@ -124,6 +135,9 @@ class RadHoc::Processor
       end
     end
     joined_query = query.joins(joins_hashes)
+    if includes
+      joined_query = joined_query.includes(joins_hashes)
+    end
 
     # Apply scopes for all joined tables
     models(association_chains).reduce(joined_query) do |q, model|
@@ -211,7 +225,7 @@ class RadHoc::Processor
 
   # Easy access to yaml nodes
   def table
-    @table ||= Arel::Table.new(@query_spec['table'])
+    @table ||= Arel::Table.new(table_name)
   end
 
   def fields
