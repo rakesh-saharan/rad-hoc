@@ -11,7 +11,7 @@ class RadHoc::Processor
   attr_accessor :scopes
 
   def initialize(spec_yaml, scopes = [])
-    @query_spec = YAML.load(spec_yaml)
+    @query_spec = YAML.safe_load(spec_yaml)
     @scopes = scopes
   end
 
