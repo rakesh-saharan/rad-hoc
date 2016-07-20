@@ -139,6 +139,7 @@ class RadHoc::Processor
     _, reflections = association_chain.reduce([base_relation, []]) do |acc, association_name|
       klass, reflections = *acc
       reflection = klass.reflect_on_association(association_name)
+      raise ArgumentError, "Invalid association: #{association_name}" unless reflection
       [reflection.klass, reflections.push(reflection)]
     end
     reflections

@@ -335,6 +335,18 @@ describe RadHoc::Processor do
         expect(results.length).to eq 1
       end
     end
+
+    context "errors" do
+      it "nicely when our associations are bad" do
+        expect{from_literal(
+          <<-EOF
+          table: tracks
+          fields:
+            albuma.title:
+          EOF
+        ).run}.to raise_error(ArgumentError)
+      end
+    end
   end
 
   describe "#all_models" do
