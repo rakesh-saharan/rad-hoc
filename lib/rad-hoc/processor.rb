@@ -8,6 +8,8 @@ class RadHoc::Processor
                       "greater_than" => :gt
   }
 
+  attr_accessor :scopes
+
   def initialize(spec_yaml, scopes = [])
     @query_spec = YAML.load(spec_yaml)
     @scopes = scopes
@@ -32,7 +34,7 @@ class RadHoc::Processor
         split_key(key).reduce(row, :send)
       end
     end
-    {data: construct_query(includes: true), lables: labels, row_fetcher: row_fetcher}
+    {data: construct_query(includes: true), labels: labels, row_fetcher: row_fetcher}
   end
 
   def add_filter(key, type, value)
