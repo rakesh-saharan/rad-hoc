@@ -355,5 +355,26 @@ describe RadHoc::Processor do
       expect(models).to include(Track, Album, Record)
     end
   end
+
+  describe "#all_cols" do
+    it "returns all the columns used" do
+      cols = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          album.title:
+          album.released_on:
+        sort:
+          - album.owner.name: asc
+        EOF
+      ).all_cols
+
+      expect(cols).to include(
+        Album.arel_table['title'],
+        Album.arel_table['released_on'],
+        Record.arel_table['name']
+      )
+    end
+  end
 end
 

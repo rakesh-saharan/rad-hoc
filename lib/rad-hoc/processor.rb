@@ -61,8 +61,13 @@ class RadHoc::Processor
     end
   end
 
+  # Query Information
   def all_models
     models(all_keys.map(&method(:to_association_chain)))
+  end
+
+  def all_cols
+    all_keys.map(&method(:key_to_col))
   end
 
   private
