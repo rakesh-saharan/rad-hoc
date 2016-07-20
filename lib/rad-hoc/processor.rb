@@ -113,7 +113,16 @@ class RadHoc::Processor
   end
 
   def generate_filter(col, type, value)
-    col.send(FILTER_OPERATORS[type], Arel::Nodes::Quoted.new(value))
+    case type
+    when 'starts_with'
+      col.matches(value + '%')
+    when 'ends_with'
+      col.matches('%' + value)
+    when 'contains'
+      col.matches('%' + value + '%')
+    else
+      col.send(FILTER_OPERATORS[type], Arel::Nodes::Quoted.new(value))
+    end
   end
 
   def prepare_sorts(query)

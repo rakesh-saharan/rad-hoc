@@ -152,6 +152,67 @@ describe RadHoc::Processor do
           expect(results.length).to eq 1
           expect(results.first['track_number']).to eq track_number
         end
+
+        it "starts_with" do
+          starter = 'Za'
+          create(:track, title: "#{starter}Track")
+          create(:track, title: "#{starter}Other Track")
+          create(:track)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+            filter:
+              title:
+                starts_with: "#{starter}"
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 2
+        end
+
+        it "ends_with" do
+          ender = 'II'
+          create(:track)
+          create(:track, title: "Track #{ender}")
+          create(:track, title: "Other Track #{ender}")
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+            filter:
+              title:
+                ends_with: "#{ender}"
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 2
+        end
+
+        it "contains" do
+          infix = 'Best'
+          create(:track, title: "Track #{infix}")
+          create(:track, title: "#Other #{infix} Track")
+          create(:track, title: "#{infix} Track")
+          create(:track)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+            filter:
+              title:
+                contains: "#{infix}"
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 3
+        end
       end
 
       context "sorting" do
