@@ -1,6 +1,9 @@
 require 'axlsx'
+require 'rad-hoc/helpers'
 
 class RadHoc::Exporters::XLSX
+  include RadHoc::Helpers::Export
+
   def initialize(rad_hoc_result, headings: true)
     @result = rad_hoc_result
     @headings = headings
@@ -13,7 +16,7 @@ class RadHoc::Exporters::XLSX
         sheet.add_row @result[:labels].values
       end
       @result[:data].each do |row|
-        sheet.add_row row.values
+        sheet.add_row drop_ids(row.values)
       end
     end
     p.to_stream

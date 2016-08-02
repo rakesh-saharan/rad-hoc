@@ -1,6 +1,9 @@
 require 'csv'
+require 'rad-hoc/helpers'
 
 class RadHoc::Exporters::CSV
+  include RadHoc::Helpers::Export
+
   def initialize(rad_hoc_result, headings: true)
     @result = rad_hoc_result
     @headings = headings
@@ -12,7 +15,7 @@ class RadHoc::Exporters::CSV
         csv << @result[:labels].values
       end
       @result[:data].each do |row|
-        csv << row.values
+        csv << drop_ids(row.values)
       end
     end
   end
