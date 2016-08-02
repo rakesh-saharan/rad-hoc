@@ -110,6 +110,44 @@ describe RadHoc::Processor do
         end
       end
 
+      context "linking" do
+        it "always returns an id but doesn't add them to labels" do
+          track = create(:track)
+
+          result = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              album.title:
+              title:
+            EOF
+          ).run
+          data = result[:data].first
+          labels = result[:labels]
+
+          expect(data['album.id']).to eq track.album.id
+          expect(data['id']).to eq track.id
+          expect(data.keys.length).to eq 4
+          expect(labels.length).to eq 2
+        end
+
+        it "provides information required for linking" do
+          track = create(:track)
+
+          result = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              album.title:
+                link: true
+            EOF
+          ).run
+
+          expect(result[:linked].to_a).to include ['album.title', Album]
+          expect(result[:data].first['album.id']).to eq track.id
+        end
+      end
+
       context "filtering" do
         it "can filter exact matches" do
           title = "My great album!"

@@ -54,6 +54,7 @@ fields:
   created_at:
   assigned_to_member.name:
     label: "Assigned To"
+    link: true
 sort:
   - created_at: asc
   - edited_at: asc
