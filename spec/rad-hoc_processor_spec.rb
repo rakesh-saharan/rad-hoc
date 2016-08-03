@@ -148,6 +148,43 @@ describe RadHoc::Processor do
         end
       end
 
+      context "merge" do
+        let(:title) { "My great album!" }
+        let(:literal) {
+            <<-EOF
+            table: tracks
+            fields:
+              album.title:
+            filter:
+              album.title:
+                exactly: *title
+            EOF
+        }
+        let(:merge) { {'title' => title} }
+
+        before(:each) do
+          create(:track)
+          create(:track, album: create(:album, title: title))
+        end
+
+        it "can merge filters" do
+          results = described_class.new(literal, [], merge).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['album.title']).to eq title
+        end
+
+        it "can validate even though merge filters are not yet set" do
+          processor = described_class.new(literal)
+          expect(processor.validate).to be_empty
+          processor.merge = merge
+          results = processor.run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['album.title']).to eq title
+        end
+      end
+
       context "filtering" do
         it "can filter exact matches" do
           title = "My great album!"
@@ -328,7 +365,7 @@ describe RadHoc::Processor do
       end
     end
 
-    context "editing after initializing" do
+    xcontext "editing after initializing" do
       it "can add filters after initialization" do
         track = create(:track)
 

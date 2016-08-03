@@ -30,22 +30,9 @@ This returns a hash:
   - `[{"name" => "Some Company"}]` if there was one company with the name "Some Company" in the DB
 - `results[:labels]`: a labels Hash for the field keys
   - `{'name' => 'Name'}` in this case
+- `results[:linked]`: an array of pairs with the keys and models of fields marked `link: true`
 
 You can pass in an ActiveRecord relation if you want to do some filtering before running the query. It will error if the specification is not valid, so check with `#validate` before using `#run` (once it's implemented).
-
-## Modification Methods
-Sometimes you just want to make a few changes to the query before running it. These methods provide a way to do that. All of these methods return `self`.
-
-### `#add_filter`
-| Argument  | Type   | Description                                  |
-| --------- | ------ | -------------------------------------------  |
-| key       | String | 'company.owner.name' style column specifier  |
-| operation | String | comparison operator (same as YAML operators) |
-| value     | Any    | value to compare against                     |
-
-Adds a new filter to the query
-
-Example: `processor.add_filter("name", "exactly", "Some Company")`
 
 ## Example Query Specification
 ```yaml
