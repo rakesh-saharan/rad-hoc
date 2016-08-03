@@ -1,5 +1,5 @@
 require 'axlsx'
-require 'rad-hoc/helpers'
+require 'rad_hoc/helpers'
 
 class RadHoc::Exporters::XLSX
   include RadHoc::Helpers::Export

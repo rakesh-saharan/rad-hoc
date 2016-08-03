@@ -2,8 +2,8 @@ require 'yaml'
 require 'arel'
 require 'active_support/core_ext/string/inflections'
 
-require 'rad-hoc/validator'
-require 'rad-hoc/spec'
+require 'rad_hoc/validator'
+require 'rad_hoc/spec'
 
 class RadHoc::Processor
   FILTER_OPERATORS = {"exactly" => :eq,

@@ -1,5 +1,5 @@
 require 'csv'
-require 'rad-hoc/helpers'
+require 'rad_hoc/helpers'
 
 class RadHoc::Exporters::CSV
   include RadHoc::Helpers::Export

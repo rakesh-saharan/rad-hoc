@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name        = 'rad-hoc'
+  s.name        = 'rad_hoc'
   s.version     = '0.0.1'
   s.licenses    = ['MIT']
   s.summary     = "Ad hoc ActiveRecord Queries"
