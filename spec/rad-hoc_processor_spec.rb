@@ -365,11 +365,12 @@ describe RadHoc::Processor do
             fields:
               id:
             filter:
-              and:
-                title:
-                  exactly: #{track_2.title}
-                track_number:
-                  exactly: #{track_2.track_number}
+              or:
+                and:
+                  title:
+                    exactly: #{track_2.title}
+                  track_number:
+                    exactly: #{track_2.track_number}
             EOF
           ).run[:data]
 

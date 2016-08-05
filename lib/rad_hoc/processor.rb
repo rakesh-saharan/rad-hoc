@@ -102,7 +102,7 @@ class RadHoc::Processor
   end
 
   def prepare_filters(query)
-    ands = prepare_filters_helper(s.filters)
+    ands = build_constraints(s.filters)
     if ands.empty?
       query
     else
@@ -110,36 +110,44 @@ class RadHoc::Processor
     end
   end
 
-  def prepare_filters_helper(filters)
+  def build_constraints(filters)
     constraints = filters.map do |key, value|
       case key
       when 'or'
-        r = prepare_filters_helper(value)
-        if r.empty?
-          []
-        else
+        safe_node(build_constraints(value)) do |r|
           r[1..-1].reduce(r.first) do |acc,cond|
             acc.or(cond)
           end
         end
       when 'and'
-        prepare_filters_helper(value)
+        safe_node(build_constraints(value)) do |r|
+          Arel::Nodes::And.new(r)
+        end
       when 'not'
-        r = prepare_filters_helper(value)
-        if r.empty?
-          []
-        else
-          [Arel::Nodes::And.new(r).not]
+        safe_node(build_constraints(value)) do |r|
+          Arel::Nodes::And.new(r).not
         end
       else
         col = s.key_to_col(key)
 
-        value.reduce([]) do |ands,(type, value)|
-          ands << generate_filter(col, type, value)
+        constraints = value.reduce([]) do |acc, (type, value)|
+          acc << generate_filter(col, type, value)
+        end
+
+        safe_node(constraints) do |r|
+          Arel::Nodes::And.new(r)
         end
       end
     end
-    constraints.flatten(1)
+    constraints.compact
+  end
+
+  def safe_node(constraints)
+    if constraints.empty?
+      nil
+    else
+      yield constraints
+    end
   end
 
   def generate_filter(col, type, value)
