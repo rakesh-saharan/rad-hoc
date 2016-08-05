@@ -308,6 +308,74 @@ describe RadHoc::Processor do
 
           expect(results.length).to eq 3
         end
+
+        it "can filter not" do
+          title = 'Not this one'
+          create(:track, title: 'This one')
+          create(:track, title: title)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+            filter:
+              not:
+                title:
+                  exactly: #{title}
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['title']).to_not eq title
+        end
+
+        it "can filter or" do
+          track_1 = create(:track, title: 'Song', track_number: 1)
+          track_2 = create(:track, title: 'Love and Music', track_number: 12)
+          track_3 = create(:track, title: 'The Song of Life', track_number: 5)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+            filter:
+              or:
+                title:
+                  exactly: #{track_2.title}
+                track_number:
+                  exactly: 5
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 2
+          expect(results.first['id']).to eq track_2.id
+          expect(results.last['id']).to eq track_3.id
+        end
+
+        it "can filter and" do
+          track_1 = create(:track, title: 'Song', track_number: 1)
+          track_2 = create(:track, title: 'Song', track_number: 12)
+          track_3 = create(:track, title: 'The Song of Life', track_number: 12)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+            filter:
+              and:
+                title:
+                  exactly: #{track_2.title}
+                track_number:
+                  exactly: #{track_2.track_number}
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['id']).to eq track_2.id
+        end
       end
 
       context "sorting" do

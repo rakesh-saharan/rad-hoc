@@ -102,13 +102,44 @@ class RadHoc::Processor
   end
 
   def prepare_filters(query)
-    s.filters.reduce(query) do |q, (key, constraints)|
-      col = s.key_to_col(key)
+    ands = prepare_filters_helper(s.filters)
+    if ands.empty?
+      query
+    else
+      query.where(Arel::Nodes::And.new(ands))
+    end
+  end
 
-      constraints.reduce(q) do |q,(type, value)|
-        q.where(generate_filter(col, type, value))
+  def prepare_filters_helper(filters)
+    constraints = filters.map do |key, value|
+      case key
+      when 'or'
+        r = prepare_filters_helper(value)
+        if r.empty?
+          []
+        else
+          r[1..-1].reduce(r.first) do |acc,cond|
+            acc.or(cond)
+          end
+        end
+      when 'and'
+        prepare_filters_helper(value)
+      when 'not'
+        r = prepare_filters_helper(value)
+        if r.empty?
+          []
+        else
+          [Arel::Nodes::And.new(r).not]
+        end
+      else
+        col = s.key_to_col(key)
+
+        value.reduce([]) do |ands,(type, value)|
+          ands << generate_filter(col, type, value)
+        end
       end
     end
+    constraints.flatten(1)
   end
 
   def generate_filter(col, type, value)

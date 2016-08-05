@@ -18,4 +18,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'factory_girl', '~> 4.7'
   s.add_development_dependency 'sqlite3', '~> 1.3'
   s.add_development_dependency 'simplecov', '~> 0.12'
+  s.add_development_dependency 'pry'
+  s.add_development_dependency 'pry-rescue'
+  s.add_development_dependency 'pry-stack_explorer'
 end
