@@ -376,6 +376,30 @@ describe RadHoc::Processor do
           expect(results.length).to eq 1
           expect(results.first['id']).to eq track_2.id
         end
+
+        it "can filter not and" do
+          track_1 = create(:track, title: 'Song', track_number: 1)
+          track_2 = create(:track, title: 'Song', track_number: 12)
+          track_3 = create(:track, title: 'The Song of Life', track_number: 12)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+            filter:
+              not:
+                title:
+                  exactly: #{track_2.title}
+                track_number:
+                  exactly: #{track_2.track_number}
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 2
+          expect(results.first['id']).to eq track_1.id
+          expect(results.last['id']).to eq track_3.id
+        end
       end
 
       context "sorting" do
