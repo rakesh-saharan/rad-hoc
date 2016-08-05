@@ -193,6 +193,8 @@ class RadHoc::Processor
     end
   end
 
+  # We might want to make auto-selecting ids optional for exporters that don't
+  # need the ids and just want to show the user what they selected
   def data_keys
     if !@data_keys
       selected_keys = s.fields.keys
