@@ -23,8 +23,10 @@ class RadHoc::Processor
     ActiveRecord::Base.connection.execute(construct_query.to_sql)
   end
 
-  def run
-    results = ActiveRecord::Base.connection.exec_query(construct_query.to_sql)
+  def run(options = {})
+    results = ActiveRecord::Base.connection.exec_query(
+      construct_query(**options).to_sql
+    )
     linked = linked_keys.reduce([]) do |acc,key|
       chain = s.to_association_chain(key)
       acc << [key, model_for_association_chain(chain)]
@@ -68,12 +70,18 @@ class RadHoc::Processor
 
   private
   # Query prep methods
-  def construct_query(includes: false)
+  def construct_query(offset: nil, limit: nil, includes: false)
     project(
-      prepare_sorts(prepare_filters(
-        joins(s.base_relation, includes: includes)
-      ))
+      apply_limit_offset(offset, limit,
+        prepare_sorts(prepare_filters(
+          joins(s.base_relation, includes: includes)
+        ))
+      )
     )
+  end
+
+  def apply_limit_offset(offset, limit, query)
+    query.offset(offset).limit(limit)
   end
 
   def apply_scopes(query)

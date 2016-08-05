@@ -207,6 +207,26 @@ describe RadHoc::Processor do
           expect(results.first['album.title']).to eq title
         end
 
+        it "doesn't blow up with unicode" do
+          dansei = '男性'
+          create(:track, title: '女性')
+          create(:track, title: dansei)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              title:
+            filter:
+              title:
+                exactly: #{dansei}
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['title']).to eq dansei
+        end
+
         it "can filter numbers" do
           track_number = 3
 
@@ -469,6 +489,45 @@ describe RadHoc::Processor do
         scope = {is_published: [false]}
         results = RadHoc::Processor.new(literal, scopes = [scope]).run[:data]
         expect(results.length).to eq 1
+      end
+    end
+
+    context "limit and offset" do
+      before(:each) do
+        create(:track, title: "Yes!")
+      end
+
+      let!(:no) { create(:track, title: "No.") }
+      let!(:yano) { create(:track, title: "Ya...No") }
+      let(:query) {
+        from_literal(
+          <<-EOF
+          table: tracks
+          fields:
+            title:
+            id:
+          EOF
+        )
+      }
+
+      it "can limit queries" do
+        results = query.run(limit: 1)[:data]
+        expect(results.length).to eq 1
+      end
+
+      it "can offset queries" do
+        results = query.run(offset: 2)[:data]
+        expect(results.length).to eq 1
+        expect(results.first['title']).to eq yano.title
+      end
+
+      it "can offset and limit queries" do
+        create(:track)
+
+        results = query.run(limit: 2, offset: 1)[:data]
+        expect(results.length).to eq 2
+        expect(results.first['title']).to eq no.title
+        expect(results.last['id']).to eq yano.id
       end
     end
 
