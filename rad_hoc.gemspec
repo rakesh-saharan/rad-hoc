@@ -9,9 +9,9 @@ Gem::Specification.new do |s|
   #s.files       = ["lib/"]
   #s.homepage    = 'https://github.com/radicalbear'
 
-  s.add_dependency 'activerecord', '~> 4.2'
-  s.add_dependency 'activesupport', '~> 4.2'
-  s.add_dependency 'arel', '~> 6.0'
+  s.add_dependency 'activerecord', '~> 5.0'
+  s.add_dependency 'activesupport', '~> 5.0'
+  s.add_dependency 'arel', '~> 7.0'
   s.add_dependency 'axlsx', '~> 2.0'
 
   s.add_development_dependency 'rspec', '~> 3.5'
