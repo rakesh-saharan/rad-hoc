@@ -21,13 +21,23 @@ class RadHoc::Spec
   end
 
   def reflections(association_chain)
-    _, reflections = association_chain.reduce([base_relation, []]) do |acc, association_name|
-      klass, reflections = *acc
-      reflection = klass.reflect_on_association(association_name)
+    association_chain.reduce([]) do |kreflections, association|
+      association_name, association_type = association.split('|')
+      current = kreflections.last&.klass || base_relation
+      reflection = current.reflect_on_association(association_name)
       raise ArgumentError, "Invalid association: #{association_name}" unless reflection
-      [reflection.klass, reflections.push(reflection)]
+      if reflection.polymorphic?
+        raise ArgumentError, "Must provide type for association: #{association_name}" unless association_type
+        reflection_klass = association_type.constantize
+      else
+        reflection_klass = reflection.klass
+      end
+      kreflections.push(KReflection.new(current, reflection_klass, reflection))
     end
-    reflections
+  end
+
+  def klasses(association_chain)
+    reflections(association_chain).map(&:klass)
   end
 
   # Key handling helper methods
@@ -51,7 +61,7 @@ class RadHoc::Spec
       table[col]
     else
       # Use arel_attribute in rails 5
-      reflections(associations).last.klass.arel_table[col]
+      klasses(associations).last.arel_table[col]
     end
   end
 
@@ -61,7 +71,7 @@ class RadHoc::Spec
 
   # A list of all models accessed in an association chain
   def models(association_chains)
-    [base_relation] + association_chains.map(&method(:reflections)).flatten(1).uniq.map(&:klass)
+    ([base_relation] + association_chains.map(&method(:klasses)).flatten(1)).uniq
   end
 
   # Memoized information
@@ -104,4 +114,9 @@ class ToRubyWithMerge < Psych::Visitors::ToRuby
       @st.fetch(o.anchor) { raise Psych::BadAlias, "Unknown alias: #{o.anchor}" }
     end
   end
+end
+
+# Holds a reflection and it's class because the klass instance variable is not
+# set for polymorphic associations
+class KReflection < Struct.new(:base, :klass, :reflection)
 end

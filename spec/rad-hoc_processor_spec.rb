@@ -401,6 +401,27 @@ describe RadHoc::Processor do
           expect(results.first['id']).to eq track_1.id
           expect(results.last['id']).to eq track_3.id
         end
+
+        it "can filter on a polymorphic" do
+          record_1 = create(:record, name: "Record Company A")
+          record_2 = create(:record, name: "Record Company B")
+          album_1 = create(:album, owner: record_2)
+          album_2 = create(:album, owner: record_1)
+
+          results = from_literal(
+            <<-EOF
+            table: albums
+            fields:
+              id:
+            filter:
+              owner|Record.name:
+                exactly: #{record_1.name}
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['id']).to eq album_2.id
+        end
       end
 
       context "sorting" do
@@ -463,53 +484,18 @@ describe RadHoc::Processor do
         end
       end
 
-      it "properly handles associations when we don't follow naming conventions" do
+      it "properly handles polymorphics" do
         album = create(:album)
 
         results = from_literal(
           <<-EOF
           table: albums
           fields:
-            owner.name:
+            owner|Record.name:
           EOF
         ).run[:data].first
 
-        expect(results['owner.name']).to eq album.owner.name
-      end
-    end
-
-    xcontext "editing after initializing" do
-      it "can add filters after initialization" do
-        track = create(:track)
-
-        results = from_literal(
-          <<-EOF
-          table: tracks
-          fields:
-            track_number:
-          EOF
-        ).add_filter('track_number', 'exactly', track.track_number - 1).run[:data]
-
-        expect(results).to be_empty
-      end
-
-      it "can add filters on fields that are already filtered" do
-        create(:track, track_number: 3)
-        create(:track, track_number: 5)
-        create(:track, track_number: 10)
-
-        results = from_literal(
-          <<-EOF
-          table: tracks
-          fields:
-            track_number:
-          filter:
-            track_number:
-              less_than: 8
-          EOF
-        ).add_filter('track_number', 'greater_than', 3).run[:data]
-
-        expect(results.length).to eq 1
+        expect(results['owner|Record.name']).to eq album.owner.name
       end
     end
 
@@ -637,29 +623,6 @@ describe RadHoc::Processor do
     end
   end
 
-  describe "#run_as_activerecord" do
-    it "returns a relation and we can iterate through the values" do
-      album = create(:album, title: "Lovely album")
-      track_1 = create(:track, title: "Track 1", album: album)
-      track_2 = create(:track, title: "Track 2", album: album)
-
-      result = from_literal(
-        <<-EOF
-        table: tracks
-        fields:
-          title:
-          album.title:
-        EOF
-      ).run_as_activerecord
-
-      expect(result[:data].first.class).to eq Track
-      expect(result[:data].map { |row| result[:row_fetcher].call(row) }).to eq [
-        [track_1.title, album.title],
-        [track_2.title, album.title]
-      ]
-    end
-  end
-
   describe "#all_models" do
     it "returns all models used" do
       models = from_literal(
@@ -668,7 +631,7 @@ describe RadHoc::Processor do
         fields:
           id:
         sort:
-          - album.owner.name: asc
+          - album.owner|Record.name: asc
         filter:
           album.performer.name:
             exactly: "Some guy"
@@ -688,7 +651,7 @@ describe RadHoc::Processor do
           album.title:
           album.released_on:
         sort:
-          - album.owner.name: asc
+          - album.owner|Record.name: asc
         EOF
       ).all_cols
 

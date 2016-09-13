@@ -39,16 +39,6 @@ class RadHoc::Processor
     }
   end
 
-  # Does no data extraction but provides row_fetcher to get values
-  def run_as_activerecord
-    row_fetcher = lambda do |row|
-      s.fields.keys.map do |key|
-        s.split_key(key).reduce(row, :send)
-      end
-    end
-    {data: construct_query(includes: true), labels: labels, row_fetcher: row_fetcher}
-  end
-
   def validate
     RadHoc::Validator.new(nil_fill_s).validate
   end
@@ -70,11 +60,11 @@ class RadHoc::Processor
 
   private
   # Query prep methods
-  def construct_query(offset: nil, limit: nil, includes: false)
+  def construct_query(offset: nil, limit: nil)
     project(
       apply_limit_offset(offset, limit,
         prepare_sorts(prepare_filters(
-          joins(s.base_relation, includes: includes)
+          joins(s.base_relation)
         ))
       )
     )
@@ -102,7 +92,10 @@ class RadHoc::Processor
   end
 
   def prepare_filters(query)
-    ands = build_constraints(s.filters)
+    apply_ands(query, build_constraints(s.filters))
+  end
+
+  def apply_ands(query, ands)
     if ands.empty?
       query
     else
@@ -173,17 +166,24 @@ class RadHoc::Processor
     end
   end
 
-  def joins(query, includes: false)
+  def joins(query)
     association_chains = s.all_keys.map(&s.method(:to_association_chain))
-    joins_hashes = association_chains.map do |association_chain|
-      association_chain.reverse.reduce({}) do |join_hash, association_name|
-        {association_name => join_hash}
+    rjoins = (association_chains.map do |association_chain|
+      s.reflections(association_chain).map do |kreflection|
+        fk = kreflection.reflection.foreign_key
+        table = kreflection.base.arel_table
+        join_table = kreflection.klass.arel_table
+
+        where = if kreflection.reflection.polymorphic? then
+                  table[kreflection.reflection.foreign_type].eq(kreflection.klass.to_s)
+                end
+        RestrictedJoin.new(
+          where,
+          Arel::Nodes::InnerJoin.new(join_table, Arel::Nodes::On.new(table[fk].eq(join_table[:id])))
+        )
       end
-    end
-    joined_query = query.joins(joins_hashes)
-    if includes
-      joined_query = joined_query.includes(joins_hashes)
-    end
+    end).flatten(1)
+    joined_query = apply_ands(query.joins(rjoins.map(&:join)), rjoins.map(&:where).compact)
 
     # Apply scopes for all joined tables
     s.models(association_chains).reduce(joined_query) do |q, model|
@@ -195,7 +195,7 @@ class RadHoc::Processor
     if associations.empty?
       s.base_relation
     else
-      s.reflections(associations).last.klass
+      s.klasses(associations).last
     end
   end
 
@@ -262,4 +262,7 @@ class RadHoc::Processor
   def nil_fill_s
     @nil_fill_s ||= RadHoc::Spec.new(@spec_yaml, {}, true)
   end
+end
+
+class RestrictedJoin < Struct.new(:where, :join)
 end

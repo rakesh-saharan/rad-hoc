@@ -71,3 +71,5 @@ aggregate:
     - sum
     - average
 ```
+
+If you're using a polymorphic field, make sure use use the `poly|Model` syntax for associations.

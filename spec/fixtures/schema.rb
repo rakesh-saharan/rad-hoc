@@ -3,6 +3,7 @@ ActiveRecord::Schema.define do
     table.column :title, :string
     table.column :performer_id, :integer
     table.column :owner_id, :integer
+    table.column :owner_type, :string
     table.column :released_on, :date
     table.column :published, :boolean
   end
