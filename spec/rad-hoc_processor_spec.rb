@@ -652,5 +652,18 @@ describe RadHoc::Processor do
       expect(result.count).to eq 3
     end
   end
+
+  describe "#table_name" do
+    it "returns the name of the table" do
+      processor = from_literal(
+        <<-EOF
+        table: albums
+        fields:
+          id:
+        EOF
+      )
+      expect(processor.table_name).to eq 'albums'
+    end
+  end
 end
 
