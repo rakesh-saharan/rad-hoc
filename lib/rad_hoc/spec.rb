@@ -84,15 +84,15 @@ class RadHoc::Spec
   end
 
   def fields
-    @fields ||= query_spec['fields'] || {}
+    @fields ||= query_spec['fields']
   end
 
   def filters
-    @filters ||= query_spec['filter'] || {}
+    @filters ||= query_spec['filter']
   end
 
   def sorts
-    @sorts ||= query_spec['sort'] || []
+    @sorts ||= query_spec['sort']
   end
 
   def all_keys

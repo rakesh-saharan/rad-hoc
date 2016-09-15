@@ -13,6 +13,8 @@ describe RadHoc::Processor do
             album.performer.title:
             album.title:
             title:
+          filter: {}
+          sort: []
           EOF
         ).run[:data].first
 
@@ -29,6 +31,8 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             title:
+          filter: {}
+          sort: []
           EOF
         ).run[:labels]
 
@@ -45,6 +49,8 @@ describe RadHoc::Processor do
             title:
             album.performer.title:
             album.title:
+          filter: {}
+          sort: []
         EOF
         ).run[:labels]
 
@@ -62,6 +68,8 @@ describe RadHoc::Processor do
           fields:
             title:
               label: "Name"
+          filter: {}
+          sort: []
           EOF
         ).run[:labels]
 
@@ -77,6 +85,8 @@ describe RadHoc::Processor do
             table: albums
             fields:
               released_on:
+            filter: {}
+            sort: []
             EOF
           ).run[:data].first
 
@@ -94,6 +104,8 @@ describe RadHoc::Processor do
             fields:
               album.title:
               title:
+            filter: {}
+            sort: []
             EOF
           ).run
           data = result[:data].first
@@ -114,6 +126,8 @@ describe RadHoc::Processor do
             fields:
               album.title:
                 link: true
+            filter: {}
+            sort: []
             EOF
           ).run
 
@@ -129,9 +143,11 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               album.title:
+                type: string
             filter:
               album.title:
                 exactly: *title
+            sort: []
             EOF
         }
         let(:merge) { {'title' => title} }
@@ -174,6 +190,7 @@ describe RadHoc::Processor do
             filter:
               album.title:
                 exactly: "#{title}"
+            sort: []
             EOF
           ).run[:data]
 
@@ -194,6 +211,7 @@ describe RadHoc::Processor do
             filter:
               title:
                 exactly: #{dansei}
+            sort: []
             EOF
           ).run[:data]
 
@@ -215,6 +233,7 @@ describe RadHoc::Processor do
             filter:
               track_number:
                 exactly: #{track_number}
+            sort: []
             EOF
           ).run[:data]
 
@@ -236,6 +255,7 @@ describe RadHoc::Processor do
             filter:
               title:
                 starts_with: "#{starter}"
+            sort: []
             EOF
           ).run[:data]
 
@@ -256,6 +276,7 @@ describe RadHoc::Processor do
             filter:
               title:
                 ends_with: "#{ender}"
+            sort: []
             EOF
           ).run[:data]
 
@@ -277,6 +298,7 @@ describe RadHoc::Processor do
             filter:
               title:
                 contains: "#{infix}"
+            sort: []
             EOF
           ).run[:data]
 
@@ -297,6 +319,7 @@ describe RadHoc::Processor do
               not:
                 title:
                   exactly: #{title}
+            sort: []
             EOF
           ).run[:data]
 
@@ -320,6 +343,7 @@ describe RadHoc::Processor do
                   exactly: #{track_2.title}
                 track_number:
                   exactly: 5
+            sort: []
             EOF
           ).run[:data]
 
@@ -345,6 +369,7 @@ describe RadHoc::Processor do
                     exactly: #{track_2.title}
                   track_number:
                     exactly: #{track_2.track_number}
+            sort: []
             EOF
           ).run[:data]
 
@@ -368,6 +393,7 @@ describe RadHoc::Processor do
                   exactly: #{track_2.title}
                 track_number:
                   exactly: #{track_2.track_number}
+            sort: []
             EOF
           ).run[:data]
 
@@ -390,6 +416,7 @@ describe RadHoc::Processor do
             filter:
               owner|Record.name:
                 exactly: #{record_1.name}
+            sort: []
             EOF
           ).run[:data]
 
@@ -410,6 +437,7 @@ describe RadHoc::Processor do
               title:
             sort:
               - title: asc
+            filter: {}
             EOF
           ).run[:data]
 
@@ -427,6 +455,7 @@ describe RadHoc::Processor do
               id:
             sort:
               - album.title: desc
+            filter: {}
             EOF
           ).run[:data]
 
@@ -448,6 +477,7 @@ describe RadHoc::Processor do
             sort:
               - title: asc
               - track_number: asc
+            filter: {}
             EOF
           ).run[:data]
 
@@ -466,6 +496,8 @@ describe RadHoc::Processor do
           table: albums
           fields:
             owner|Record.name:
+          filter: {}
+          sort: []
           EOF
         ).run[:data].first
 
@@ -479,10 +511,66 @@ describe RadHoc::Processor do
           <<-EOF
           fields:
             title:
+          filter: {}
+          sort: []
           EOF
         ).validate
 
         expect(validation.first[:name]).to eq :contains_table
+      end
+
+      it "validates that we've provided fields" do
+        validation = from_literal(
+          <<-EOF
+          table: albums
+          filter: {}
+          sort: []
+          EOF
+        ).validate
+
+        expect(validation.first[:name]).to eq :contains_fields
+      end
+
+      it "validates that we've provided filter" do
+        validation = from_literal(
+          <<-EOF
+          table: albums
+          fields:
+            title:
+          sort: []
+          EOF
+        ).validate
+
+        expect(validation.first[:name]).to eq :contains_filter
+      end
+
+      it "validates that we've provided sort" do
+        validation = from_literal(
+            <<-EOF
+          table: albums
+          fields:
+            title:
+          filter: {}
+        EOF
+        ).validate
+
+        expect(validation.first[:name]).to eq :contains_sort
+      end
+
+      it "validates that the fields have data types" do
+        validation = from_literal(
+          <<-EOF
+          table: albums
+          fields:
+            id:
+              type: integer
+            title:
+          filter: {}
+          sort: []
+          EOF
+        ).validate
+
+        expect(validation.first[:name]).to eq :has_data_type
       end
 
       it "validates that fields are of the correct data type" do
@@ -492,6 +580,8 @@ describe RadHoc::Processor do
           fields:
             title
             track_number
+          filter: {}
+          sort: []
           EOF
         ).validate
 
@@ -509,6 +599,8 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             id:
+          filter: {}
+          sort: []
           EOF
         results = RadHoc::Processor.new(literal, scopes = [best_title: []]).run[:data]
         expect(results.length).to eq 1
@@ -524,6 +616,8 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             album.published:
+          filter: {}
+          sort: []
           EOF
         results = RadHoc::Processor.new(literal, scopes = [published: []]).run[:data]
         expect(results.length).to eq 1
@@ -538,6 +632,8 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             album.published:
+          filter: {}
+          sort: []
           EOF
         scope = {is_published: [false]}
         results = RadHoc::Processor.new(literal, scopes = [scope]).run[:data]
@@ -559,6 +655,8 @@ describe RadHoc::Processor do
           fields:
             title:
             id:
+          filter: {}
+          sort: []
           EOF
         )
       }
@@ -591,6 +689,8 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             albuma.title:
+          filter: {}
+          sort: []
           EOF
         ).run}.to raise_error(ArgumentError)
       end
@@ -626,6 +726,7 @@ describe RadHoc::Processor do
           album.released_on:
         sort:
           - album.owner|Record.name: asc
+        filter: {}
         EOF
       ).all_cols
 
@@ -647,6 +748,8 @@ describe RadHoc::Processor do
         table: tracks
         fields:
           id:
+        filter: {}
+        sort: []
         EOF
       )
       expect(result.count).to eq 3
@@ -660,6 +763,8 @@ describe RadHoc::Processor do
         table: albums
         fields:
           id:
+        filter: {}
+        sort: []
         EOF
       )
       expect(processor.table_name).to eq 'albums'
