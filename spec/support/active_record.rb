@@ -39,7 +39,7 @@ load 'spec/fixtures/schema.rb'
 class Album < ActiveRecord::Base
   has_many :tracks
   belongs_to :performer
-  belongs_to :owner, class_name: "Record"
+  belongs_to :owner, polymorphic: true
 
   scope :published, -> { where(published: true) }
 
@@ -60,5 +60,5 @@ class Performer < ActiveRecord::Base
 end
 
 class Record < ActiveRecord::Base
-  has_many :albums
+  has_many :albums, as: :owner
 end
