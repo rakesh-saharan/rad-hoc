@@ -225,9 +225,13 @@ class RadHoc::Processor
   # Returns the lablels for each selected key
   def labels
     s.fields.reduce({}) do |acc, (key, options)|
-      label = options && options['label'] || s.split_key(key).last(2).join(" ").titleize
+      label = options && options['label'] || default_label(key)
       acc.merge(key => label)
     end
+  end
+  
+  def default_label(key)
+    s.split_key(key).last(2).join(" ").titleize
   end
 
   # Returns an array of keys that were marked "link: true"
