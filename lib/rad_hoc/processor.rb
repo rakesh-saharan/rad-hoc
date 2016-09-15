@@ -19,24 +19,15 @@ class RadHoc::Processor
     @merge = merge
   end
 
-  def run_raw
-    ActiveRecord::Base.connection.execute(construct_query.to_sql)
-  end
-
   def run(options = {})
     results = ActiveRecord::Base.connection.exec_query(
-      construct_query(**options).to_sql
+      project(construct_query(**options)).to_sql
     )
-    linked = linked_keys.reduce([]) do |acc,key|
-      chain = s.to_association_chain(key)
-      acc << [key, model_for_association_chain(chain)]
-    end
+    post_process(results)
+  end
 
-    {
-      data: label_rows(cast_values(results)),
-      labels: labels,
-      linked: linked
-    }
+  def count(options = {})
+    construct_query(**options).count
   end
 
   def validate
@@ -61,12 +52,10 @@ class RadHoc::Processor
   private
   # Query prep methods
   def construct_query(offset: nil, limit: nil)
-    project(
-      apply_limit_offset(offset, limit,
-        prepare_sorts(prepare_filters(
-          joins(s.base_relation)
-        ))
-      )
+    apply_limit_offset(offset, limit,
+      prepare_sorts(prepare_filters(
+        joins(s.base_relation)
+      ))
     )
   end
 
@@ -200,6 +189,18 @@ class RadHoc::Processor
   end
 
   # Post-Processing Methods
+  def post_process(results)
+    linked = linked_keys.reduce([]) do |acc,key|
+      chain = s.to_association_chain(key)
+      acc << [key, model_for_association_chain(chain)]
+    end
+
+    {
+      data: label_rows(cast_values(results)),
+      labels: labels,
+      linked: linked
+    }
+  end
   # Associate column names with data
   def label_rows(rows)
     keys = data_keys

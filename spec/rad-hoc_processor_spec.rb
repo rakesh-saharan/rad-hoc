@@ -2,50 +2,6 @@ require 'spec_helper'
 
 describe RadHoc::Processor do
   describe "#run" do
-    context "raw queries" do
-      it "can do a simple select query" do
-        track = create(:track)
-        processor = from_yaml('simple.yaml')
-        validation = processor.validate
-        expect(validation).to be_empty
-
-        result = processor.run_raw
-        expect(result.length).to eq 1
-
-        result_track = result.first
-        expect(result_track['title']).to eq track.title
-        expect(result_track['track_number']).to eq track.track_number
-        expect(result_track['id']).to eq track.id
-        expect(result_track['album_id']).to eq track.album_id
-      end
-
-      it "can handle simple associations" do
-        track = create(:track)
-
-        result = from_literal(
-          <<-EOF
-          table: tracks
-          fields:
-            album.title:
-          EOF
-        ).run_raw.first
-        expect(result['title']).to eq track.album.title
-      end
-
-      it "can handle nested associations" do
-        track = create(:track)
-
-        result = from_literal(
-          <<-EOF
-          table: tracks
-          fields:
-            album.performer.title:
-          EOF
-        ).run_raw.first
-        expect(result['title']).to eq track.album.performer.title
-      end
-    end
-
     context "interpreted queries" do
       it "can handle nested associations with columns that have identical names" do
         track = create(:track)
@@ -678,6 +634,22 @@ describe RadHoc::Processor do
         Album.arel_table['released_on'],
         Record.arel_table['name']
       )
+    end
+  end
+
+  describe "#count" do
+    it "returns the count" do
+      create(:track)
+      create(:track)
+      create(:track)
+      result = from_literal(
+        <<-EOF
+        table: tracks
+        fields:
+          id:
+        EOF
+      )
+      expect(result.count).to eq 3
     end
   end
 end
