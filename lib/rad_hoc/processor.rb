@@ -224,7 +224,7 @@ class RadHoc::Processor
   # Returns the lablels for each selected key
   def labels
     s.fields.reduce({}) do |acc, (key, options)|
-      label = options && options['label'] || s.split_key(key).last.titleize
+      label = options && options['label'] || s.split_key(key).last(2).join(" ").titleize
       acc.merge(key => label)
     end
   end

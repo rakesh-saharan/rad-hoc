@@ -79,6 +79,24 @@ describe RadHoc::Processor do
         expect(labels['title']).to eq 'Title'
       end
 
+      it "can label fields on associations" do
+        track = create(:track)
+
+        labels = from_literal(
+            <<-EOF
+          table: tracks
+          fields:
+            title:
+            album.performer.title:
+            album.title:
+        EOF
+        ).run[:labels]
+
+        expect(labels['title']).to eq 'Title'
+        expect(labels['album.title']).to eq 'Album Title'
+        expect(labels['album.performer.title']).to eq 'Performer Title'
+      end
+
       it "can label fields that are manually provided" do
         track = create(:track)
 
