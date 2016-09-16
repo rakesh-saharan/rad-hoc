@@ -608,7 +608,7 @@ describe RadHoc::Processor do
       end
 
       it "supports providing scopes on an association" do
-        create(:track)
+        create(:track, published: true)
         create(:track, album: create(:album, published: false))
 
         literal =
@@ -624,7 +624,7 @@ describe RadHoc::Processor do
       end
 
       it "supports providing scopes with an argument" do
-        create(:track, album: create(:album, published: false))
+        create(:track, album: create(:album, published: false), published: false)
         create(:track)
 
         literal =

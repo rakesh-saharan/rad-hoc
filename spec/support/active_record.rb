@@ -52,7 +52,12 @@ class Track < ActiveRecord::Base
   belongs_to :album
   has_one :performer, through: :album
 
+  scope :published, -> { where(published: true) }
   scope :best_title, -> { where(title: "Best Title") }
+
+  def self.is_published(b)
+    where(published: b)
+  end
 end
 
 class Performer < ActiveRecord::Base

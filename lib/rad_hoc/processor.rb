@@ -69,7 +69,7 @@ class RadHoc::Processor
         if q.respond_to? scope_name
           q.send(scope_name, *args)
         else
-          q
+          raise ArgumentError, "scope #{scope_name} does not exist on #{q.to_s}"
         end
       end
     end

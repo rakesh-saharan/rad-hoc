@@ -12,6 +12,7 @@ ActiveRecord::Schema.define do
     table.column :album_id, :integer
     table.column :track_number, :integer
     table.column :title, :string
+    table.column :published, :boolean
   end
 
   create_table :performers do |table|
