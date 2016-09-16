@@ -158,14 +158,14 @@ describe RadHoc::Processor do
         end
 
         it "can merge filters" do
-          results = described_class.new(literal, [], merge).run[:data]
+          results = described_class.new(literal, rejected_tables, [], merge).run[:data]
 
           expect(results.length).to eq 1
           expect(results.first['album.title']).to eq title
         end
 
         it "can validate even though merge filters are not yet set" do
-          processor = described_class.new(literal)
+          processor = described_class.new(literal, rejected_tables)
           expect(processor.validate).to be_empty
           processor.merge = merge
           results = processor.run[:data]
@@ -573,6 +573,21 @@ describe RadHoc::Processor do
         expect(validation.first[:name]).to eq :has_data_type
       end
 
+      it "validates that rejected tables are not included" do
+        validation = from_literal(
+            <<-EOF
+          table: brutals
+          fields:
+            id:
+              type: integer
+          filter: {}
+          sort: []
+        EOF
+        ).validate
+
+        expect(validation.first[:name]).to eq :valid_table
+      end
+
       it "validates that fields are of the correct data type" do
         validation = from_literal(
           <<-EOF
@@ -602,7 +617,7 @@ describe RadHoc::Processor do
           filter: {}
           sort: []
           EOF
-        results = RadHoc::Processor.new(literal, scopes = [best_title: []]).run[:data]
+        results = RadHoc::Processor.new(literal, rejected_tables, scopes = [best_title: []]).run[:data]
         expect(results.length).to eq 1
         expect(results.first['id']).to eq target.id
       end
@@ -619,7 +634,7 @@ describe RadHoc::Processor do
           filter: {}
           sort: []
           EOF
-        results = RadHoc::Processor.new(literal, scopes = [published: []]).run[:data]
+        results = RadHoc::Processor.new(literal, rejected_tables, scopes = [published: []]).run[:data]
         expect(results.length).to eq 1
       end
 
@@ -636,7 +651,7 @@ describe RadHoc::Processor do
           sort: []
           EOF
         scope = {is_published: [false]}
-        results = RadHoc::Processor.new(literal, scopes = [scope]).run[:data]
+        results = RadHoc::Processor.new(literal, rejected_tables, scopes = [scope]).run[:data]
         expect(results.length).to eq 1
       end
     end

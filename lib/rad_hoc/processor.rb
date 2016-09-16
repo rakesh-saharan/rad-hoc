@@ -13,8 +13,9 @@ class RadHoc::Processor
 
   attr_accessor :scopes, :merge
 
-  def initialize(spec_yaml, scopes = [], merge = {})
+  def initialize(spec_yaml, rejected_tables, scopes = [], merge = {})
     @spec_yaml = spec_yaml
+    @rejected_tables = rejected_tables
     @scopes = scopes
     @merge = merge
   end
@@ -31,7 +32,7 @@ class RadHoc::Processor
   end
 
   def validate
-    RadHoc::Validator.new(nil_fill_s).validate
+    RadHoc::Validator.new(nil_fill_s, @rejected_tables).validate
   end
 
   # Query Information

@@ -67,3 +67,7 @@ end
 class Record < ActiveRecord::Base
   has_many :albums, as: :owner
 end
+
+class Brutal < ActiveRecord::Base
+
+end

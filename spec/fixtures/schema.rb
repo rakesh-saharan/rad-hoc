@@ -23,4 +23,8 @@ ActiveRecord::Schema.define do
   create_table :records do |table|
     table.column :name, :string
   end
+
+  create_table :brutals do |table|
+    table.column :name, :string
+  end
 end
