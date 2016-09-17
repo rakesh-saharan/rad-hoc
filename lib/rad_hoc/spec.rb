@@ -74,13 +74,22 @@ class RadHoc::Spec
     ([base_relation] + association_chains.map(&method(:klasses)).flatten(1)).uniq
   end
 
-  # Memoized information
-  def query_spec
-    @query_spec ||= load_spec
+  # Query Information
+  def all_models
+    models(all_keys.map(&method(:to_association_chain)))
+  end
+
+  def all_cols
+    all_keys.map(&method(:key_to_col))
   end
 
   def table_name
     query_spec['table']
+  end
+
+  # Memoized information
+  def query_spec
+    @query_spec ||= load_spec
   end
 
   def fields

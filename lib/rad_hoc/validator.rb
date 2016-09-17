@@ -18,15 +18,17 @@ class RadHoc::Validator
     validations.push(validation(:filter_is_hash, "filters must be a map")) unless @s.filters.class == Hash
 
     if validations.empty?
-      @s.models(@s.all_keys.map(&@s.method(:to_association_chain))).each do |model|
+      # Check if any tables are "rejected tables"
+      @s.all_models.each do |model|
         if @rejected_tables.include?(model.table_name)
           validations.push(validation(:valid_table, "model #{model.name} is not allowed"))
         end
       end
 
-      @s.fields.each do |field|
-        if field[1] && field[1]["type"]
-          field_type = field[1]["type"]
+      # Ensure data types are defined for all fields
+      @s.fields.each do |key,options|
+        if options && options["type"]
+          field_type = options["type"]
 
           unless ["integer", "string", "datetime", "boolean", "text", "decimal", "float", "date"].include?(field_type)
             validations.push(validation(:valid_data_type, "data type #{field_type} is not implemented"))
@@ -38,7 +40,6 @@ class RadHoc::Validator
       end
     end
 
-    @query_spec = nil
     validations.reduce([]) do |acc, validation|
       acc.push({name: validation[:name], message: validation[:message]})
     end

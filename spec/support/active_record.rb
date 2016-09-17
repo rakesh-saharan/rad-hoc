@@ -69,5 +69,4 @@ class Record < ActiveRecord::Base
 end
 
 class Brutal < ActiveRecord::Base
-
 end

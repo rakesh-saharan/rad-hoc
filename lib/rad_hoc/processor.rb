@@ -13,7 +13,7 @@ class RadHoc::Processor
 
   attr_accessor :scopes, :merge
 
-  def initialize(spec_yaml, rejected_tables, scopes = [], merge = {})
+  def initialize(spec_yaml, rejected_tables = [], scopes = [], merge = {})
     @spec_yaml = spec_yaml
     @rejected_tables = rejected_tables
     @scopes = scopes
@@ -37,13 +37,11 @@ class RadHoc::Processor
 
   # Query Information
   def all_models
-    spec = nil_fill_s
-    spec.models(spec.all_keys.map(&spec.method(:to_association_chain)))
+    nil_fill_s.all_models
   end
 
   def all_cols
-    spec = nil_fill_s
-    spec.all_keys.map(&spec.method(:key_to_col))
+    nil_fill_s.all_cols
   end
 
   def table_name
