@@ -24,7 +24,15 @@ ActiveRecord::Schema.define do
     table.column :name, :string
   end
 
-  create_table :brutals do |table|
+  create_table :companies do |table|
+    table.column :name, :string
+  end
+
+  create_table :members do |table|
+    table.column :security_group_id, :integer
+  end
+
+  create_table :security_groups do |table|
     table.column :name, :string
   end
 end
