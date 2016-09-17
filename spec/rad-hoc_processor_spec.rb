@@ -576,7 +576,7 @@ describe RadHoc::Processor do
       it "validates that rejected tables are not included" do
         validation = from_literal(
             <<-EOF
-          table: brutals
+          table: companies
           fields:
             id:
               type: integer
@@ -586,6 +586,23 @@ describe RadHoc::Processor do
         ).validate
 
         expect(validation.first[:name]).to eq :valid_table
+      end
+
+      it "validates that associated rejected tables are not included" do
+        validation = from_literal(
+            <<-EOF
+          table: members
+          fields:
+            id:
+              type: integer
+            security_group.name:
+              type: string
+          filter: {}
+          sort: []
+        EOF
+        ).validate
+
+        expect(validation.first[:message]).to eq "model SecurityGroup is not allowed"
       end
 
       it "validates that fields are of the correct data type" do

@@ -68,5 +68,12 @@ class Record < ActiveRecord::Base
   has_many :albums, as: :owner
 end
 
-class Brutal < ActiveRecord::Base
+class Company < ActiveRecord::Base
+end
+
+class Member < ActiveRecord::Base
+  belongs_to :security_group
+end
+
+class SecurityGroup < ActiveRecord::Base
 end

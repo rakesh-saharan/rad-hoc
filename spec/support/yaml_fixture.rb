@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-REJECTED_TABLES = ["schema_migrations", "brutals"]
+REJECTED_TABLES = ["schema_migrations", "companies", "security_groups"]
 
 module YAMLFixture
   def from_yaml(name)
