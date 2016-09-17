@@ -13,7 +13,7 @@ class RadHoc::Processor
 
   attr_accessor :scopes, :merge
 
-  def initialize(spec_yaml, rejected_tables = [], scopes = [], merge = {})
+  def initialize(spec_yaml, rejected_tables, scopes = [], merge = {})
     @spec_yaml = spec_yaml
     @rejected_tables = rejected_tables
     @scopes = scopes

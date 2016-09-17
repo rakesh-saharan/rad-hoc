@@ -165,7 +165,7 @@ describe RadHoc::Processor do
         end
 
         it "can validate even though merge filters are not yet set" do
-          processor = described_class.new(literal)
+          processor = described_class.new(literal, rejected_tables)
           expect(processor.validate).to be_empty
           processor.merge = merge
           results = processor.run[:data]
