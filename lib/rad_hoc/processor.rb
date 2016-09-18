@@ -21,6 +21,8 @@ class RadHoc::Processor
   end
 
   def run(options = {})
+    raise ArgumentError, "Can't run, spec is invalid: #{validate.first[:message]}" if validate.any?
+
     results = ActiveRecord::Base.connection.exec_query(
       project(construct_query(**options)).to_sql
     )

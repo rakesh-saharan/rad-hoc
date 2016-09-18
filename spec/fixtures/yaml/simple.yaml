@@ -1,8 +1,12 @@
 table: tracks
 fields:
   title:
+    type: string
   track_number:
+    type: integer
   id:
+    type: integer
   album_id:
+    type: integer
 filter: {}
 sort: []

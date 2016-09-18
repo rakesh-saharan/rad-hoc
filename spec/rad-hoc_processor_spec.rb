@@ -11,8 +11,11 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             album.performer.title:
+              type: string
             album.title:
+              type: string
             title:
+              type: string
           filter: {}
           sort: []
           EOF
@@ -31,6 +34,7 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             title:
+              type: string
           filter: {}
           sort: []
           EOF
@@ -47,8 +51,11 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             title:
+              type: string
             album.performer.title:
+              type: string
             album.title:
+              type: string
           filter: {}
           sort: []
         EOF
@@ -67,6 +74,7 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             title:
+              type: string
               label: "Name"
           filter: {}
           sort: []
@@ -85,6 +93,7 @@ describe RadHoc::Processor do
             table: albums
             fields:
               released_on:
+                type: date
             filter: {}
             sort: []
             EOF
@@ -103,7 +112,9 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               album.title:
+                type: string
               title:
+                type: string
             filter: {}
             sort: []
             EOF
@@ -125,6 +136,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               album.title:
+                type: string
                 link: true
             filter: {}
             sort: []
@@ -187,6 +199,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               album.title:
+               type: string
             filter:
               album.title:
                 exactly: "#{title}"
@@ -208,6 +221,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               title:
+                type: string
             filter:
               title:
                 exactly: #{dansei}
@@ -230,6 +244,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               track_number:
+                type: integer
             filter:
               track_number:
                 exactly: #{track_number}
@@ -252,6 +267,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             filter:
               title:
                 starts_with: "#{starter}"
@@ -273,6 +289,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             filter:
               title:
                 ends_with: "#{ender}"
@@ -295,6 +312,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             filter:
               title:
                 contains: "#{infix}"
@@ -315,6 +333,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             filter:
               not:
                 title:
@@ -337,6 +356,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             filter:
               or:
                 title:
@@ -362,6 +382,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             filter:
               or:
                 and:
@@ -387,6 +408,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             filter:
               not:
                 title:
@@ -413,6 +435,7 @@ describe RadHoc::Processor do
             table: albums
             fields:
               id:
+                type: integer
             filter:
               owner|Record.name:
                 exactly: #{record_1.name}
@@ -435,6 +458,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               title:
+                type: string
             sort:
               - title: asc
             filter: {}
@@ -453,6 +477,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             sort:
               - album.title: desc
             filter: {}
@@ -474,6 +499,7 @@ describe RadHoc::Processor do
             table: tracks
             fields:
               id:
+                type: integer
             sort:
               - title: asc
               - track_number: asc
@@ -496,6 +522,7 @@ describe RadHoc::Processor do
           table: albums
           fields:
             owner|Record.name:
+              type: string
           filter: {}
           sort: []
           EOF
@@ -511,6 +538,7 @@ describe RadHoc::Processor do
           <<-EOF
           fields:
             title:
+              type: string
           filter: {}
           sort: []
           EOF
@@ -537,6 +565,7 @@ describe RadHoc::Processor do
           table: albums
           fields:
             title:
+              type: string
           sort: []
           EOF
         ).validate
@@ -550,6 +579,7 @@ describe RadHoc::Processor do
           table: albums
           fields:
             title:
+              type: string
           filter: {}
         EOF
         ).validate
@@ -631,6 +661,7 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             id:
+              type: integer
           filter: {}
           sort: []
           EOF
@@ -648,6 +679,7 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             album.published:
+              type: string
           filter: {}
           sort: []
           EOF
@@ -664,6 +696,7 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             album.published:
+              type: string
           filter: {}
           sort: []
           EOF
@@ -686,7 +719,9 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             title:
+              type: string
             id:
+              type: integer
           filter: {}
           sort: []
           EOF
@@ -721,9 +756,22 @@ describe RadHoc::Processor do
           table: tracks
           fields:
             albuma.title:
+              type: string
           filter: {}
           sort: []
           EOF
+        ).run}.to raise_error(ArgumentError)
+      end
+
+      it "doesn't run with invalid spec" do
+        expect{from_literal(
+            <<-EOF
+          table: tracks
+          fields:
+            title:
+          filter: {}
+          sort: []
+        EOF
         ).run}.to raise_error(ArgumentError)
       end
     end
@@ -736,6 +784,7 @@ describe RadHoc::Processor do
         table: tracks
         fields:
           id:
+            type: integer
         sort:
           - album.owner|Record.name: asc
         filter:
