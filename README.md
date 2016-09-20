@@ -34,6 +34,20 @@ This returns a hash:
 
 You can pass in an ActiveRecord relation if you want to do some filtering before running the query. It will error if the specification is not valid, so check with `#validate` before using `#run` (once it's implemented).
 
+## Supported Filters
+* exactly
+* less_than
+* greater_than
+* starts_with
+* ends_with
+* contains
+
+## Future Filter Support
+* greater_than_or_equal_to
+* less_than_or_equal_to
+* on
+* any
+
 ## Example Query Specification
 ```yaml
 table: tasks
@@ -48,7 +62,7 @@ sort:
   - description: desc
 filter:
   assigned_to_member.name:
-    contains: " "
+    contains: "Foo"
     not:
       starts_with: "Gary"
       ends_with: "Foster"
@@ -58,13 +72,9 @@ filter:
   charges.actual_start_date:
     greater_than: 2016-05-01
   charges.actual_end_date:
-    on: 2016-05-02 # Matches date and datetimes on specified day
-    greater_than_or_equal_to: 2016-05-02 12:00:00 -5
-    less_than_or_equal_to: 2016-05-03 23:59:59 -5
+    exactly: 2016-05-02 # Matches date and datetimes on specified day
   task_status:
-  any: # Translates to SQL IN
-    - "Completed"
-    - "Discarded"
+
 # Missing grouping capabilities
 aggregate:
   charges.hours:
