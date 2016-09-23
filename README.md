@@ -66,12 +66,12 @@ filter:
     not:
       starts_with: "Gary"
       ends_with: "Foster"
-  charges.hours:
+  charge.hours:
     greater_than: 1
     less_than: 8
-  charges.actual_start_date:
+  charge.actual_start_date:
     greater_than: 2016-05-01
-  charges.actual_end_date:
+  charge.actual_end_date:
     exactly: 2016-05-02 # Matches date and datetimes on specified day
   task_status:
 
