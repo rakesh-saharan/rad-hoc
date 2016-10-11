@@ -61,11 +61,11 @@ sort:
   - edited_at: asc
   - description: desc
 filter:
-  assigned_to_member.name:
-    contains: "Foo"
-    not:
-      starts_with: "Gary"
-      ends_with: "Foster"
+  not:
+    assigned_to_member.name:
+      contains: "Foo"
+        starts_with: "Gary"
+        ends_with: "Foster"
   charge.hours:
     greater_than: 1
     less_than: 8
