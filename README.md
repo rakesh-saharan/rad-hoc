@@ -1,4 +1,7 @@
 # Rad hoc
+[![Code Climate](https://codeclimate.com/github/radicalbear/rad-hoc/badges/gpa.svg)](https://codeclimate.com/github/radicalbear/rad-hoc)
+[![Issue Count](https://codeclimate.com/github/radicalbear/rad-hoc/badges/issue_count.svg)](https://codeclimate.com/github/radicalbear/rad-hoc/issues)
+
 Library for custom reports generated from YAML query specifications
 
 ## Usage
