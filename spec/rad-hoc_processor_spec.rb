@@ -372,6 +372,55 @@ describe RadHoc::Processor do
           expect(results.last['id']).to eq track_3.id
         end
 
+        it "supports multiple ors" do
+          track_1 = create(:track, title: 'Song', track_number: 1)
+          track_2 = create(:track, title: 'Love and Music', track_number: 12)
+          track_3 = create(:track, title: 'The Song of Life', track_number: 5)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+                type: integer
+            filter:
+              title:
+                or:
+                  and:
+                    exactly: #{track_2.title}
+                    contains: ove and M
+            sort: []
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['id']).to eq track_2.id
+        end
+
+        it "supports multiple ors with an 'and'" do
+          track_1 = create(:track, title: 'Song', track_number: 1)
+          track_2 = create(:track, title: 'Love and Music', track_number: 12)
+          track_3 = create(:track, title: 'The Song of Life', track_number: 5)
+
+          results = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              id:
+                type: integer
+            filter:
+              title:
+                or:
+                  exactly: #{track_2.title}
+                  contains: ove and M
+            sort: []
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['id']).to eq track_2.id
+        end
+
         it "can filter and" do
           track_1 = create(:track, title: 'Song', track_number: 1)
           track_2 = create(:track, title: 'Song', track_number: 12)
