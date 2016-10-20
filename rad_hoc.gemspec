@@ -6,8 +6,7 @@ Gem::Specification.new do |s|
   s.description = "Library for custom reports generated from YAML query specifications"
   s.authors     = ["Gary Foster", "Stephen McIntosh", "Joshua Plicque"]
   s.email       = 'garyfoster@radicalbear.com'
-  #s.files       = ["lib/"]
-  #s.homepage    = 'https://github.com/radicalbear'
+  s.homepage    = 'https://github.com/radicalbear'
 
   s.add_dependency 'activerecord', '~> 4.2'
   s.add_dependency 'activesupport', '~> 4.2'
@@ -18,7 +17,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'factory_girl', '~> 4.7'
   s.add_development_dependency 'sqlite3', '~> 1.3'
   s.add_development_dependency 'simplecov', '~> 0.12'
-  s.add_development_dependency 'pry'
-  s.add_development_dependency 'pry-rescue'
-  s.add_development_dependency 'pry-stack_explorer'
+  s.add_development_dependency 'pry', '~> 0.10'
+  s.add_development_dependency 'pry-rescue', '~> 1.4'
+  s.add_development_dependency 'pry-stack_explorer', '~> 0.4'
 end
