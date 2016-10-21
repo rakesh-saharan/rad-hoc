@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'rad_hoc'
-  s.version     = '0.0.1'
+  s.version     = '0.0.2'
   s.licenses    = ['MIT']
   s.summary     = "Ad hoc ActiveRecord Queries"
   s.description = "Library for custom reports generated from YAML query specifications"
