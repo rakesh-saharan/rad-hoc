@@ -8,6 +8,8 @@ Gem::Specification.new do |s|
   s.email       = 'garyfoster@radicalbear.com'
   s.homepage    = 'https://github.com/radicalbear'
 
+  s.files = Dir["{lib}/**/*", "MIT-LICENSE"]
+
   s.add_dependency 'activerecord', '~> 4.2'
   s.add_dependency 'activesupport', '~> 4.2'
   s.add_dependency 'arel', '~> 6.0'
