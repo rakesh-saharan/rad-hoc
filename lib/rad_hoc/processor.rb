@@ -7,8 +7,38 @@ require 'rad_hoc/spec'
 
 class RadHoc::Processor
   FILTER_OPERATORS = {"exactly" => :eq,
+                      "exactly_all" => :eq_all,
+                      "exactly_any" => :eq_any,
+                      "in" => :in,
+                      "in_all" => :in_all,
+                      "in_any" => :in_any,
                       "less_than" => :lt,
-                      "greater_than" => :gt
+                      "less_than_all" => :lt_all,
+                      "less_than_any" => :lt_any,
+                      "less_than_or_equal_to" => :lteq,
+                      "less_than_or_equal_to_all" => :lteq_all,
+                      "less_than_or_equal_to_any" => :lteq_any,
+                      "greater_than" => :gt,
+                      "greater_than_all" => :gt_all,
+                      "greater_than_any" => :gt_any,
+                      "greater_than_or_equal_to" => :gteq,
+                      "greater_than_or_equal_to_all" => :gteq_all,
+                      "greater_than_or_equal_to_any" => :gteq_any,
+                      # Not Filters
+                      "not_exactly" => :not_eq,
+                      "not_exactly_all" => :not_eq_all,
+                      "not_exactly_any" => :not_eq_any,
+                      "not_in" => :in,
+                      "not_in_all" => :in_all,
+                      "not_in_any" => :in_any
+                      #between
+                      #does_not_match
+                      #does_not_match_all
+                      #does_not_match_any
+                      #matches
+                      #matches_all
+                      #matches_any
+                      #not_between
   }
 
   attr_accessor :scopes, :merge
@@ -142,7 +172,7 @@ class RadHoc::Processor
     when 'contains'
       col.matches('%' + value + '%')
     else
-      col.send(FILTER_OPERATORS[type], Arel::Nodes::Quoted.new(value))
+      col.send(FILTER_OPERATORS[type], value)
     end
   end
 

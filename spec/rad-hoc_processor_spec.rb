@@ -3,85 +3,89 @@ require 'spec_helper'
 describe RadHoc::Processor do
   describe "#run" do
     context "interpreted queries" do
-      it "can handle nested associations with columns that have identical names" do
-        track = create(:track)
+      context "associations" do
+        it "can handle nested associations with columns that have identical names" do
+          track = create(:track)
 
-        result = from_literal(
-          <<-EOF
-          table: tracks
-          fields:
-            album.performer.title:
-              type: string
-            album.title:
-              type: string
-            title:
-              type: string
-          filter: {}
-          sort: []
-          EOF
-        ).run[:data].first
-
-        expect(result['title']).to eq track.title
-        expect(result['album.title']).to eq track.album.title
-        expect(result['album.performer.title']).to eq track.album.performer.title
-      end
-
-      it "can label fields automatically" do
-        track = create(:track)
-
-        labels = from_literal(
-          <<-EOF
-          table: tracks
-          fields:
-            title:
-              type: string
-          filter: {}
-          sort: []
-          EOF
-        ).run[:labels]
-
-        expect(labels['title']).to eq 'Title'
-      end
-
-      it "can label fields on associations" do
-        track = create(:track)
-
-        labels = from_literal(
+          result = from_literal(
             <<-EOF
-          table: tracks
-          fields:
-            title:
-              type: string
-            album.performer.title:
-              type: string
-            album.title:
-              type: string
-          filter: {}
-          sort: []
-        EOF
-        ).run[:labels]
+            table: tracks
+            fields:
+              album.performer.title:
+                type: string
+              album.title:
+                type: string
+              title:
+                type: string
+            filter: {}
+            sort: []
+            EOF
+          ).run[:data].first
 
-        expect(labels['title']).to eq 'Title'
-        expect(labels['album.title']).to eq 'Album Title'
-        expect(labels['album.performer.title']).to eq 'Performer Title'
+          expect(result['title']).to eq track.title
+          expect(result['album.title']).to eq track.album.title
+          expect(result['album.performer.title']).to eq track.album.performer.title
+        end
       end
 
-      it "can label fields that are manually provided" do
-        track = create(:track)
+      context "labels" do
+        it "can label fields automatically" do
+          track = create(:track)
 
-        labels = from_literal(
-          <<-EOF
-          table: tracks
-          fields:
-            title:
-              type: string
-              label: "Name"
-          filter: {}
-          sort: []
+          labels = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              title:
+                type: string
+            filter: {}
+            sort: []
+            EOF
+          ).run[:labels]
+
+          expect(labels['title']).to eq 'Title'
+        end
+
+        it "can label fields on associations" do
+          track = create(:track)
+
+          labels = from_literal(
+              <<-EOF
+            table: tracks
+            fields:
+              title:
+                type: string
+              album.performer.title:
+                type: string
+              album.title:
+                type: string
+            filter: {}
+            sort: []
           EOF
-        ).run[:labels]
+          ).run[:labels]
 
-        expect(labels['title']).to eq 'Name'
+          expect(labels['title']).to eq 'Title'
+          expect(labels['album.title']).to eq 'Album Title'
+          expect(labels['album.performer.title']).to eq 'Performer Title'
+        end
+
+        it "can label fields that are manually provided" do
+          track = create(:track)
+
+          labels = from_literal(
+            <<-EOF
+            table: tracks
+            fields:
+              title:
+                type: string
+                label: "Name"
+            filter: {}
+            sort: []
+            EOF
+          ).run[:labels]
+
+          expect(labels['title']).to eq 'Name'
+        end
       end
 
       context "type casting" do
@@ -188,263 +192,298 @@ describe RadHoc::Processor do
       end
 
       context "filtering" do
-        it "can filter exact matches" do
-          title = "My great album!"
+        context "basic filters" do
+          it "can filter exact matches" do
+            title = "My great album!"
 
-          create(:track)
-          create(:track, album: create(:album, title: title))
+            create(:track)
+            create(:track, album: create(:album, title: title))
 
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              album.title:
-               type: string
-            filter:
-              album.title:
-                exactly: "#{title}"
-            sort: []
-            EOF
-          ).run[:data]
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                album.title:
+                 type: string
+              filter:
+                album.title:
+                  exactly: "#{title}"
+              sort: []
+              EOF
+            ).run[:data]
 
-          expect(results.length).to eq 1
-          expect(results.first['album.title']).to eq title
-        end
+            expect(results.length).to eq 1
+            expect(results.first['album.title']).to eq title
+          end
 
-        it "doesn't blow up with unicode" do
-          dansei = '男性'
-          create(:track, title: '女性')
-          create(:track, title: dansei)
+          it "doesn't blow up with unicode" do
+            dansei = '男性'
+            create(:track, title: '女性')
+            create(:track, title: dansei)
 
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              title:
-                type: string
-            filter:
-              title:
-                exactly: #{dansei}
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 1
-          expect(results.first['title']).to eq dansei
-        end
-
-        it "can filter numbers" do
-          track_number = 3
-
-          create(:track)
-          create(:track, track_number: track_number)
-
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              track_number:
-                type: integer
-            filter:
-              track_number:
-                exactly: #{track_number}
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 1
-          expect(results.first['track_number']).to eq track_number
-        end
-
-        it "starts_with" do
-          starter = 'Za'
-          create(:track, title: "#{starter}Track")
-          create(:track, title: "#{starter}Other Track")
-          create(:track)
-
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              id:
-                type: integer
-            filter:
-              title:
-                starts_with: "#{starter}"
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 2
-        end
-
-        it "ends_with" do
-          ender = 'II'
-          create(:track)
-          create(:track, title: "Track #{ender}")
-          create(:track, title: "Other Track #{ender}")
-
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              id:
-                type: integer
-            filter:
-              title:
-                ends_with: "#{ender}"
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 2
-        end
-
-        it "contains" do
-          infix = 'Best'
-          create(:track, title: "Track #{infix}")
-          create(:track, title: "#Other #{infix} Track")
-          create(:track, title: "#{infix} Track")
-          create(:track)
-
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              id:
-                type: integer
-            filter:
-              title:
-                contains: "#{infix}"
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 3
-        end
-
-        it "can filter not" do
-          title = 'Not this one'
-          create(:track, title: 'This one')
-          create(:track, title: title)
-
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              id:
-                type: integer
-            filter:
-              not:
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
                 title:
-                  exactly: #{title}
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 1
-          expect(results.first['title']).to_not eq title
-        end
-
-        it "can filter or" do
-          track_1 = create(:track, title: 'Song', track_number: 1)
-          track_2 = create(:track, title: 'Love and Music', track_number: 12)
-          track_3 = create(:track, title: 'The Song of Life', track_number: 5)
-
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              id:
-                type: integer
-            filter:
-              or:
+                  type: string
+              filter:
                 title:
-                  exactly: #{track_2.title}
+                  exactly: #{dansei}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 1
+            expect(results.first['title']).to eq dansei
+          end
+
+          it "can filter numbers" do
+            track_number = 3
+
+            create(:track)
+            create(:track, track_number: track_number)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
                 track_number:
-                  exactly: 5
-            sort: []
-            EOF
-          ).run[:data]
+                  type: integer
+              filter:
+                track_number:
+                  exactly: #{track_number}
+              sort: []
+              EOF
+            ).run[:data]
 
-          expect(results.length).to eq 2
-          expect(results.first['id']).to eq track_2.id
-          expect(results.last['id']).to eq track_3.id
+            expect(results.length).to eq 1
+            expect(results.first['track_number']).to eq track_number
+          end
         end
 
-        it "can filter and" do
-          track_1 = create(:track, title: 'Song', track_number: 1)
-          track_2 = create(:track, title: 'Song', track_number: 12)
-          track_3 = create(:track, title: 'The Song of Life', track_number: 12)
+        context "match filters" do
+          it "starts_with" do
+            starter = 'Za'
+            create(:track, title: "#{starter}Track")
+            create(:track, title: "#{starter}Other Track")
+            create(:track)
 
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              id:
-                type: integer
-            filter:
-              or:
-                and:
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                id:
+                  type: integer
+              filter:
+                title:
+                  starts_with: "#{starter}"
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 2
+          end
+
+          it "ends_with" do
+            ender = 'II'
+            create(:track)
+            create(:track, title: "Track #{ender}")
+            create(:track, title: "Other Track #{ender}")
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                id:
+                  type: integer
+              filter:
+                title:
+                  ends_with: "#{ender}"
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 2
+          end
+
+          it "contains" do
+            infix = 'Best'
+            create(:track, title: "Track #{infix}")
+            create(:track, title: "#Other #{infix} Track")
+            create(:track, title: "#{infix} Track")
+            create(:track)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                id:
+                  type: integer
+              filter:
+                title:
+                  contains: "#{infix}"
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 3
+          end
+        end
+
+        context "any filters" do
+          it "exactly_any" do
+            title_1 = 'Test 1'
+            title_2 = 'Test 2'
+            create(:track, title: title_1)
+            create(:track, title: 'Test 3')
+            create(:track, title: title_2)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                title:
+                  type: string
+              filter:
+                title:
+                  exactly_any:
+                    - #{title_1}
+                    - #{title_2}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 2
+            expect(results.map {|x| x['title']}).to eq [title_1, title_2]
+          end
+        end
+
+        context "not filters" do
+          it "can filter not_exactly" do
+            title = 'Not this one'
+            create(:track, title: 'This one')
+            create(:track, title: title)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                title:
+                  type: string
+              filter:
+                title:
+                  not_exactly: #{title}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 1
+            expect(results.first['title']).to_not eq title
+          end
+        end
+
+        context "block filters" do
+          it "can filter not" do
+            title = 'Not this one'
+            create(:track, title: 'This one')
+            create(:track, title: title)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                title:
+                  type: string
+              filter:
+                not:
+                  title:
+                    exactly: #{title}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 1
+            expect(results.first['title']).to_not eq title
+          end
+
+          it "can filter or" do
+            track_1 = create(:track, title: 'Song', track_number: 1)
+            track_2 = create(:track, title: 'Love and Music', track_number: 12)
+            track_3 = create(:track, title: 'The Song of Life', track_number: 5)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                id:
+                  type: integer
+              filter:
+                or:
+                  title:
+                    exactly: #{track_2.title}
+                  track_number:
+                    exactly: 5
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 2
+            expect(results.first['id']).to eq track_2.id
+            expect(results.last['id']).to eq track_3.id
+          end
+
+          it "can filter and" do
+            track_1 = create(:track, title: 'Song', track_number: 1)
+            track_2 = create(:track, title: 'Song', track_number: 12)
+            track_3 = create(:track, title: 'The Song of Life', track_number: 12)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                id:
+                  type: integer
+              filter:
+                or:
+                  and:
+                    title:
+                      exactly: #{track_2.title}
+                    track_number:
+                      exactly: #{track_2.track_number}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 1
+            expect(results.first['id']).to eq track_2.id
+          end
+
+          it "can filter not and" do
+            track_1 = create(:track, title: 'Song', track_number: 1)
+            track_2 = create(:track, title: 'Song', track_number: 12)
+            track_3 = create(:track, title: 'The Song of Life', track_number: 12)
+
+            results = from_literal(
+              <<-EOF
+              table: tracks
+              fields:
+                id:
+                  type: integer
+              filter:
+                not:
                   title:
                     exactly: #{track_2.title}
                   track_number:
                     exactly: #{track_2.track_number}
-            sort: []
-            EOF
-          ).run[:data]
+              sort: []
+              EOF
+            ).run[:data]
 
-          expect(results.length).to eq 1
-          expect(results.first['id']).to eq track_2.id
-        end
-
-        it "can filter not and" do
-          track_1 = create(:track, title: 'Song', track_number: 1)
-          track_2 = create(:track, title: 'Song', track_number: 12)
-          track_3 = create(:track, title: 'The Song of Life', track_number: 12)
-
-          results = from_literal(
-            <<-EOF
-            table: tracks
-            fields:
-              id:
-                type: integer
-            filter:
-              not:
-                title:
-                  exactly: #{track_2.title}
-                track_number:
-                  exactly: #{track_2.track_number}
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 2
-          expect(results.first['id']).to eq track_1.id
-          expect(results.last['id']).to eq track_3.id
-        end
-
-        it "can filter on a polymorphic" do
-          record_1 = create(:record, name: "Record Company A")
-          record_2 = create(:record, name: "Record Company B")
-          album_1 = create(:album, owner: record_2)
-          album_2 = create(:album, owner: record_1)
-
-          results = from_literal(
-            <<-EOF
-            table: albums
-            fields:
-              id:
-                type: integer
-            filter:
-              owner|Record.name:
-                exactly: #{record_1.name}
-            sort: []
-            EOF
-          ).run[:data]
-
-          expect(results.length).to eq 1
-          expect(results.first['id']).to eq album_2.id
+            expect(results.length).to eq 2
+            expect(results.first['id']).to eq track_1.id
+            expect(results.last['id']).to eq track_3.id
+          end
         end
       end
 
@@ -514,21 +553,46 @@ describe RadHoc::Processor do
         end
       end
 
-      it "properly handles polymorphics" do
-        album = create(:album)
+      context "polymorphics" do
+        it "properly handles polymorphics" do
+          album = create(:album)
 
-        results = from_literal(
-          <<-EOF
-          table: albums
-          fields:
-            owner|Record.name:
-              type: string
-          filter: {}
-          sort: []
-          EOF
-        ).run[:data].first
+          results = from_literal(
+            <<-EOF
+            table: albums
+            fields:
+              owner|Record.name:
+                type: string
+            filter: {}
+            sort: []
+            EOF
+          ).run[:data].first
 
-        expect(results['owner|Record.name']).to eq album.owner.name
+          expect(results['owner|Record.name']).to eq album.owner.name
+        end
+
+        it "can filter on a polymorphic" do
+          record_1 = create(:record, name: "Record Company A")
+          record_2 = create(:record, name: "Record Company B")
+          album_1 = create(:album, owner: record_2)
+          album_2 = create(:album, owner: record_1)
+
+          results = from_literal(
+            <<-EOF
+            table: albums
+            fields:
+              id:
+                type: integer
+            filter:
+              owner|Record.name:
+                exactly: #{record_1.name}
+            sort: []
+            EOF
+          ).run[:data]
+
+          expect(results.length).to eq 1
+          expect(results.first['id']).to eq album_2.id
+        end
       end
     end
 
