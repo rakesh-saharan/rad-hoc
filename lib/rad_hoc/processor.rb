@@ -98,14 +98,14 @@ class RadHoc::Processor
         if q.respond_to? scope_name
           q.send(scope_name, *args)
         else
-          raise ArgumentError, "scope #{scope_name} does not exist on #{q.to_s}"
+          raise ArgumentError, "scope #{scope_name} does not exist on #{q}"
         end
       end
     end
   end
 
   def project(query)
-    cols = data_keys.map &s.method(:key_to_col)
+    cols = data_keys.map(&s.method(:key_to_col))
     query.select(cols)
   end
 

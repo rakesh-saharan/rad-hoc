@@ -26,7 +26,7 @@ class RadHoc::Validator
       end
 
       # Ensure data types are defined for all fields
-      @s.fields.each do |key,options|
+      @s.fields.each do |_,options|
         if options && options["type"]
           field_type = options["type"]
 
