@@ -4,7 +4,7 @@ class RadHoc::Spec
     result = YAML.parse(spec_yaml, nil)
     raise ArgumentError, "Bad Spec (Psych could not parse YAML)" unless result
 
-    class_loader = Psych::ClassLoader::Restricted.new([], [])
+    class_loader = Psych::ClassLoader::Restricted.new(['Date', 'Time'], [])
     scanner = Psych::ScalarScanner.new class_loader
     visitor = ToRubyWithMerge.new scanner, class_loader, merge, fill_nil
 

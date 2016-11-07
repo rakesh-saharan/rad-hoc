@@ -21,4 +21,9 @@ FactoryGirl.define do
   factory :record do
     name "Great Music Inc."
   end
+
+  factory :performance do
+    performer
+    start_time Time.now
+  end
 end

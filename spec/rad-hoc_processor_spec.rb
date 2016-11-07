@@ -105,6 +105,23 @@ describe RadHoc::Processor do
 
           expect(result['released_on'].class).to be(Date)
         end
+
+        it "can cast times" do
+          create(:performance)
+
+          result = from_literal(
+            <<-EOF
+            table: performances
+            fields:
+              start_time:
+                type: datetime
+            filter: {}
+            sort: []
+            EOF
+          ).run[:data].first
+
+          expect(result['start_time'].class).to be(Time)
+        end
       end
 
       context "linking" do
@@ -259,6 +276,54 @@ describe RadHoc::Processor do
 
             expect(results.length).to eq 1
             expect(results.first['track_number']).to eq track_number
+          end
+
+          it "can filter between times" do
+            create(:performance, start_time: 5.days.ago)
+            correct = create(:performance, start_time: 1.day.ago)
+            create(:performance, start_time: 3.hours.ago)
+
+            results = from_literal(
+              <<-EOF
+              table: performances
+              fields:
+                id:
+                  type: integer
+              filter:
+                start_time:
+                  between:
+                    - #{26.hours.ago.iso8601}
+                    - #{4.hours.ago.iso8601}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 1
+            expect(results.first['id']).to eq correct.id
+          end
+
+          it "can filter between dates" do
+            create(:album, released_on: 5.months.ago.to_date)
+            correct = create(:album, released_on: 3.months.ago.to_date)
+            create(:album, released_on: Date.today)
+
+            results = from_literal(
+              <<-EOF
+              table: albums
+              fields:
+                id:
+                  type: integer
+              filter:
+                released_on:
+                  between:
+                    - #{4.months.ago.strftime('%F')}
+                    - #{1.month.ago.strftime('%F')}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.length).to eq 1
+            expect(results.first['id']).to eq correct.id
           end
         end
 

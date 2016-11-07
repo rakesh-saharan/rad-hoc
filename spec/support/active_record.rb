@@ -71,6 +71,10 @@ end
 class Company < ActiveRecord::Base
 end
 
+class Performance < ActiveRecord::Base
+  belongs_to :performer
+end
+
 class Member < ActiveRecord::Base
   belongs_to :security_group
 end

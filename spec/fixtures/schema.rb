@@ -28,6 +28,11 @@ ActiveRecord::Schema.define do
     table.column :name, :string
   end
 
+  create_table :performances do |table|
+    table.column :performer_id, :integer
+    table.column :start_time, :datetime
+  end
+
   create_table :members do |table|
     table.column :security_group_id, :integer
   end

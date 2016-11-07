@@ -28,9 +28,9 @@ class RadHoc::Processor
                       "not_exactly" => :not_eq,
                       "not_exactly_all" => :not_eq_all,
                       "not_exactly_any" => :not_eq_any,
-                      "not_in" => :in,
-                      "not_in_all" => :in_all,
-                      "not_in_any" => :in_any
+                      "not_in" => :not_in,
+                      "not_in_all" => :not_in_all,
+                      "not_in_any" => :not_in_any
                       #between
                       #does_not_match
                       #does_not_match_all
@@ -171,6 +171,9 @@ class RadHoc::Processor
       col.matches('%' + value)
     when 'contains'
       col.matches('%' + value + '%')
+    when 'between'
+      s, e = value
+      col.between(s..e)
     else
       col.send(FILTER_OPERATORS[type], value)
     end
