@@ -446,6 +446,31 @@ describe RadHoc::Processor do
             expect(results.length).to eq 1
             expect(results.first['title']).to_not eq title
           end
+
+          it "can filter not between times" do
+            create(:performance, start_time: 1.day.ago)
+            correct = [
+              create(:performance, start_time: 5.days.ago),
+              create(:performance, start_time: 3.hours.ago)
+            ]
+
+            results = from_literal(
+              <<-EOF
+              table: performances
+              fields:
+                id:
+                  type: integer
+              filter:
+                start_time:
+                  not_between:
+                    - #{26.hours.ago.iso8601}
+                    - #{4.hours.ago.iso8601}
+              sort: []
+              EOF
+            ).run[:data]
+
+            expect(results.map {|x| x['id']}).to eq correct.map(&:id)
+          end
         end
 
         context "block filters" do

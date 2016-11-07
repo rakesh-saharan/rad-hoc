@@ -31,14 +31,12 @@ class RadHoc::Processor
                       "not_in" => :not_in,
                       "not_in_all" => :not_in_all,
                       "not_in_any" => :not_in_any
-                      #between
                       #does_not_match
                       #does_not_match_all
                       #does_not_match_any
                       #matches
                       #matches_all
                       #matches_any
-                      #not_between
   }
 
   attr_accessor :scopes, :merge
@@ -174,6 +172,9 @@ class RadHoc::Processor
     when 'between'
       s, e = value
       col.between(s..e)
+    when 'not_between'
+      s, e = value
+      col.not_between(s..e)
     else
       col.send(FILTER_OPERATORS[type], value)
     end
