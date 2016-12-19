@@ -203,7 +203,7 @@ class RadHoc::Processor
                 end
         RestrictedJoin.new(
           where,
-          Arel::Nodes::InnerJoin.new(join_table, Arel::Nodes::On.new(table[fk].eq(join_table[:id])))
+          Arel::Nodes::OuterJoin.new(join_table, Arel::Nodes::On.new(table[fk].eq(join_table[:id])))
         )
       end
     end).flatten(1)
