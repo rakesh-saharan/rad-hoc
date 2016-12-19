@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.files = Dir["{lib}/**/*", "MIT-LICENSE"]
 
   s.add_dependency 'activerecord', '~> 5.0'
-  s.add_dependency 'activesupport', '~> 4.0'
+  s.add_dependency 'activesupport', '~> 5.0'
   s.add_dependency 'arel', '~> 7.0'
   s.add_dependency 'axlsx', '~> 2.0'
 
